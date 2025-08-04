@@ -1,0 +1,115 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- USER MODEL ---
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String
+  lastName  String
+  password  String
+  balance   Int      @default(0)
+  isAdmin   Boolean  @default(false)
+
+  purchasedCourses UserCourse[]
+  moduleCompletions ModuleCompletion[]
+  certificates Certificate[]
+}
+
+// --- COURSE MODEL ---
+model Course {
+  id              String      @id @default(cuid())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  title           String      @db.VarChar(255)
+  description     String
+  instructor      String
+  topics          String[]
+  price           Int
+  thumbnail_image String?
+  category        CourseCategory
+
+  modules         Module[]
+  purchasedBy     UserCourse[]
+  certificates    Certificate[]
+}
+
+// --- MODULE MODEL ---
+model Module {
+  id            String   @id @default(cuid())
+  title         String   @db.VarChar(255)
+  description   String
+  pdf_content   String?
+  video_content String?
+  order         Int
+
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+
+  completions   ModuleCompletion[]
+
+  @@unique([courseId, order])
+}
+
+// --- RELATIONSHIP MODELS ---
+model UserCourse {
+  userId      String
+  courseId    String
+  purchasedAt DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id])
+
+  @@id([userId, courseId])
+}
+
+model ModuleCompletion {
+  id        String  @id @default(cuid())
+  isCompleted Boolean @default(false)
+
+  userId    String
+  moduleId  String
+
+  user      User    @relation(fields: [userId], references: [id])
+  module    Module  @relation(fields: [moduleId], references: [id])
+
+  @@unique([userId, moduleId])
+}
+
+// --- CERTIFICATE MODEL ---
+model Certificate {
+  id         String   @id @default(cuid())
+  finishDate DateTime @default(now())
+
+  userId     String
+  courseId   String
+
+  user       User     @relation(fields: [userId], references: [id])
+  course     Course   @relation(fields: [courseId], references: [id])
+  
+  @@unique([userId, courseId])
+}
+
+// --- ENUMS ---
+enum CourseCategory {
+  BUSINESS
+  COMPUTER_SCIENCE
+  DATA_SCIENCE
+  ARTIFICIAL_INTELLIGENCE
+  INFORMATION_TECHNOLOGY
+  SOCIAL_SCIENCE
+  PHYSICAL_SCIENCE
+  PERSONAL_DEVELOPMENT
+  ARTS
+  LANGUAGE
+}
