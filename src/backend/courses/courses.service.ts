@@ -1,0 +1,64 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
+import * as fs from 'fs/promises';
+
+@Injectable()
+export class CoursesService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(createCourseDto: CreateCourseDto, thumbnailPath?: string) {
+    const priceInCents = createCourseDto.price * 100;
+
+    return this.prisma.course.create({
+      data: {
+        ...createCourseDto,
+        price: priceInCents,
+        thumbnail_image: thumbnailPath,
+      },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.course.findMany();
+  }
+
+  async findOne(id: string) {
+    const course = await this.prisma.course.findUnique({ where: { id } });
+    if (!course) {
+      throw new NotFoundException(`Course with ID "${id}" not found.`);
+    }
+    return course;
+  }
+
+  async update(id: string, updateCourseDto: UpdateCourseDto, thumbnailPath?: string) {
+    await this.findOne(id);
+
+    const priceInCents = updateCourseDto.price ? updateCourseDto.price * 100 : undefined;
+
+    return this.prisma.course.update({
+      where: { id },
+      data: {
+        ...updateCourseDto,
+        price: priceInCents,
+        thumbnail_image: thumbnailPath,
+      },
+    });
+  }
+
+  async remove(id: string) {
+    const course = await this.findOne(id);
+
+    if (course.thumbnail_image) {
+      try {
+        await fs.unlink(course.thumbnail_image);
+      } catch (error) {
+        console.error(`Failed to delete thumbnail for course ${id}:`, error);
+      }
+    }
+
+    await this.prisma.course.delete({ where: { id } });
+    return { message: `Course with ID "${id}" deleted successfully.` };
+  }
+}
