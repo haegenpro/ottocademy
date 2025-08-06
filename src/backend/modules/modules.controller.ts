@@ -1,32 +1,56 @@
 import {
-  Controller, Post, Body, UseGuards, UseInterceptors, UploadedFiles, Param, Patch
+  Controller,
+  Patch,
+  Body,
+  UseGuards,
+  Param,
+  Request,
+  Put,
+  Delete,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { AdminGuard } from '../auth/guards/admin.guard';
 import { ModulesService } from './modules.service';
-import { CreateModuleDto } from './dto/create-module.dto';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
+import { UpdateModuleDto } from './dto/update-module.dto';
 
-@UseGuards(AdminGuard)
-@Controller('courses/:courseId/modules')
+@Controller('modules')
 export class ModulesController {
   constructor(private readonly modulesService: ModulesService) {}
 
-  @Post()
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'pdf_content', maxCount: 1 },
-    { name: 'video_content', maxCount: 1 },
-  ]))
-  create(
-    @Param('courseId') courseId: string,
-    @Body() createModuleDto: CreateModuleDto,
-    @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
-  ) {
-    return this.modulesService.create(courseId, createModuleDto, files);
-  }
-
+  @UseGuards(AdminGuard)
   @Patch('reorder')
   reorder(@Body() reorderModulesDto: ReorderModulesDto) {
-      return this.modulesService.reorder(reorderModulesDto);
+    return this.modulesService.reorder(reorderModulesDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/complete')
+  completeModule(@Param('id') moduleId: string, @Request() req) {
+    const userId = req.user.id;
+    return this.modulesService.complete(moduleId, userId);
+  }
+
+  @UseGuards(AdminGuard)
+  @Put(':id')
+  @UseInterceptors(FileFieldsInterceptor([
+      { name: 'pdf_content', maxCount: 1 },
+      { name: 'video_content', maxCount: 1 },
+  ]))
+  update(
+      @Param('id') id: string,
+      @Body() updateModuleDto: UpdateModuleDto,
+      @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+  ) {
+      return this.modulesService.update(id, updateModuleDto, files);
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+      return this.modulesService.remove(id);
   }
 }

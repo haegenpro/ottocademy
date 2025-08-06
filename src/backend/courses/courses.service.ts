@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -60,5 +60,48 @@ export class CoursesService {
 
     await this.prisma.course.delete({ where: { id } });
     return { message: `Course with ID "${id}" deleted successfully.` };
+  }
+
+  async buy(courseId: string, userId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const course = await tx.course.findUnique({ where: { id: courseId } });
+      const user = await tx.user.findUnique({ where: { id: userId } });
+
+      if (!course) {
+        throw new NotFoundException(`Course with ID "${courseId}" not found.`);
+      }
+      if (!user) {
+        throw new NotFoundException(`User with ID "${userId}" not found.`);
+      }
+
+      if (user.balance < course.price) {
+        throw new ForbiddenException('Insufficient balance.');
+      }
+
+      const existingPurchase = await tx.userCourse.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+      });
+
+      if (existingPurchase) {
+        throw new ConflictException('Course already purchased.');
+      }
+
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: { balance: { decrement: course.price } },
+      });
+
+      await tx.userCourse.create({
+        data: {
+          userId,
+          courseId,
+        },
+      });
+
+      return {
+        message: 'Course purchased successfully!',
+        user_balance: updatedUser.balance,
+      };
+    });
   }
 }

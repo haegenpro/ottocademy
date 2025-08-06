@@ -1,18 +1,23 @@
 import {
   Controller, Post, Body, UseGuards, UseInterceptors,
-  UploadedFile, Get, Param, Put, Delete
+  UploadedFile, Get, Param, Put, Delete, Request, UploadedFiles
 } from '@nestjs/common';
-
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoursesService } from './courses.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { /*...,*/ ModulesService } from '../modules/modules.service';
+import { CreateModuleDto } from '../modules/dto/create-module.dto';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(AdminGuard)
 @Controller('courses')
 export class CoursesController {
-  constructor(private readonly coursesService: CoursesService) {}
+  constructor(private readonly coursesService: CoursesService,
+              private readonly modulesService: ModulesService
+  ) {}
 
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail_image'))
@@ -46,5 +51,25 @@ export class CoursesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.coursesService.remove(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/buy')
+  buyCourse(@Param('id') courseId: string, @Request() req) {
+    const userId = req.user.id;
+    return this.coursesService.buy(courseId, userId);
+  }
+
+  @Post(':courseId/modules')
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'pdf_content', maxCount: 1 },
+    { name: 'video_content', maxCount: 1 },
+  ]))
+  createModule(
+    @Param('courseId') courseId: string,
+    @Body() createModuleDto: CreateModuleDto,
+    @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+  ) {
+    return this.modulesService.create(courseId, createModuleDto, files);
   }
 }
