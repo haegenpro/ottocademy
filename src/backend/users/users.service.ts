@@ -67,7 +67,6 @@ export class UsersService {
       where: { id },
     });
 
-    // Return a confirmation message
     return { message: `User with ID "${id}" has been deleted.` };
   }
 

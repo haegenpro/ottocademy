@@ -20,5 +20,4 @@ COPY --from=build /usr/src/app/prisma ./prisma
 COPY --from=build /usr/src/app/node_modules/.prisma/client ./node_modules/.prisma/client
 
 EXPOSE 3000
-
 CMD ["node", "dist/main"]
