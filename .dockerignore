@@ -1,0 +1,7 @@
+# dependencies and build artifacts
+node_modules
+dist
+
+#logs
+.env
+npm-debug.log

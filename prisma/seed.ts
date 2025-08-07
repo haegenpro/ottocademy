@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -29,7 +29,7 @@ async function main() {
       instructor: 'John Doe',
       price: 4999,
       topics: ['HTML', 'CSS', 'JavaScript', 'Frontend'],
-      category: Prisma.CourseCategory.COMPUTER_SCIENCE, 
+      category: 'COMPUTER_SCIENCE',
       thumbnail_image: 'uploads/sample-thumbnail.jpg',
     },
   });
