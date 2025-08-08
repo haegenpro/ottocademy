@@ -71,7 +71,7 @@ export class ModulesService {
       },
     });
 
-    let certificate = null;
+    let certificate: any = null;
     if (totalModules === completedModules) {
       certificate = await this.prisma.certificate.upsert({
         where: { userId_courseId: { userId, courseId } },

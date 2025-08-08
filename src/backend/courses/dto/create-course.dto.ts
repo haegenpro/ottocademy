@@ -1,4 +1,5 @@
-import { IsArray, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { CourseCategory } from '@prisma/client';
 
 export class CreateCourseDto {
   @IsString()
@@ -20,4 +21,7 @@ export class CreateCourseDto {
   @IsInt()
   @Min(0)
   price: number;
+
+  @IsEnum(CourseCategory)
+  category: CourseCategory;
 }
