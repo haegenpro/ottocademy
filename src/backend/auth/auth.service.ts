@@ -66,4 +66,53 @@ export class AuthService {
       user: userWithoutPassword,
     };
   }
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        purchasedCourses: {
+          include: {
+            course: {
+              include: {
+                modules: {
+                  orderBy: { order: 'asc' },
+                },
+              },
+            },
+          },
+        },
+        moduleCompletions: {
+          where: { isCompleted: true },
+          include: {
+            module: {
+              select: {
+                id: true,
+                title: true,
+                courseId: true,
+              },
+            },
+          },
+        },
+        certificates: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                title: true,
+                instructor: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found.');
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
 }

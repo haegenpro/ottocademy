@@ -21,11 +21,24 @@ export class CoursesService {
   }
 
   async findAll() {
-    return this.prisma.course.findMany();
+    return this.prisma.course.findMany({
+      include: {
+        modules: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
   }
 
   async findOne(id: string) {
-    const course = await this.prisma.course.findUnique({ where: { id } });
+    const course = await this.prisma.course.findUnique({ 
+      where: { id },
+      include: {
+        modules: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
@@ -50,15 +63,46 @@ export class CoursesService {
   async remove(id: string) {
     const course = await this.findOne(id);
 
+    // Delete in correct order due to foreign key constraints
+    await this.prisma.$transaction(async (tx) => {
+      // Delete module completions first
+      await tx.moduleCompletion.deleteMany({
+        where: {
+          module: {
+            courseId: id,
+          },
+        },
+      });
+
+      // Delete modules
+      await tx.module.deleteMany({
+        where: { courseId: id },
+      });
+
+      // Delete certificates
+      await tx.certificate.deleteMany({
+        where: { courseId: id },
+      });
+
+      // Delete user course purchases
+      await tx.userCourse.deleteMany({
+        where: { courseId: id },
+      });
+
+      // Finally delete the course
+      await tx.course.delete({ where: { id } });
+    });
+
+    // Try to delete thumbnail file (don't fail if it doesn't exist)
     if (course.thumbnail_image) {
       try {
         await fs.unlink(course.thumbnail_image);
       } catch (error) {
-        console.error(`Failed to delete thumbnail for course ${id}:`, error);
+        // File doesn't exist, that's okay
+        console.log(`Thumbnail file not found for course ${id}, skipping deletion`);
       }
     }
 
-    await this.prisma.course.delete({ where: { id } });
     return { message: `Course with ID "${id}" deleted successfully.` };
   }
 

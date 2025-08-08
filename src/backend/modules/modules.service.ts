@@ -12,17 +12,17 @@ export class ModulesService {
   async create(
     courseId: string,
     createModuleDto: CreateModuleDto,
-    files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+    files?: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
   ) {
-    const pdfPath = files.pdf_content?.[0]?.path;
-    const videoPath = files.video_content?.[0]?.path;
+    const pdfPath = files?.pdf_content?.[0]?.path;
+    const videoPath = files?.video_content?.[0]?.path;
 
     return this.prisma.module.create({
       data: {
         ...createModuleDto,
         courseId: courseId,
-        pdf_content: pdfPath,
-        video_content: videoPath,
+        pdf_content: pdfPath || null,
+        video_content: videoPath || null,
       },
     });
   }
