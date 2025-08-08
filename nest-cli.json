@@ -4,6 +4,5 @@
   "sourceRoot": "src/backend",
   "compilerOptions": {
     "deleteOutDir": true
-  },
-  "entryFile": "main"
+  }
 }
