@@ -56,7 +56,6 @@ export class CoursesController {
     return this.coursesService.remove(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/buy')
   buyCourse(@Param('id') courseId: string, @Request() req) {
     const userId = req.user.id;
