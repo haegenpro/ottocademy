@@ -1,20 +1,4 @@
 services:
-  # Application Service
-  app:
-    build: .
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
-      - ./uploads:/usr/src/app/uploads
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-    depends_on:
-      db:
-        condition: service_healthy
-    command: npm run start:prod
-
   # Database Service
   db:
     image: postgres:14
@@ -31,6 +15,37 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # Database Migration and Seeding Service
+  db-migrate:
+    build: .
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node scripts/docker-seed.js"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # Application Service
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./uploads:/usr/src/app/uploads
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    command: npm run start:prod
 
 volumes:
   postgres_data:

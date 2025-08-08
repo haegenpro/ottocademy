@@ -72,45 +72,177 @@ npx prisma generate
 
 Choose your preferred development environment:
 
-## 🐳 Option A: Docker Development
+## 🐳 Option A: Docker Development (Recommended)
 
 ### Prerequisites for Docker
 - **Docker** and **Docker Compose** installed
 
-### Setup with Docker
-1. Make sure you're using the **Docker .env configuration** (Option B above)
-2. Start the services:
+### Three Easy Ways to Start
 
+#### 🚀 **Method 1: Use the Setup Script (Recommended)**
+
+**Windows PowerShell:**
 ```bash
-# Start PostgreSQL database in Docker
-docker-compose up -d db
-
-# Run database migrations
-npx prisma migrate dev --name init
-
-# (Optional) Seed the database
-npx prisma db seed
+# One command setup - handles everything automatically
+.\docker-seed.ps1
 ```
 
-### Running with Docker
-```bash
-# Development mode
-npm run build:tsc && npm run start:prod
+**Features:**
+- ✅ **Smart Seeding**: Only seeds database if it's empty (prevents redundant data)
+- ✅ **Health Checks**: Waits for database to be ready before proceeding
+- ✅ **Error Handling**: Provides clear feedback and troubleshooting info
+- ✅ **Safe Re-runs**: Can be run multiple times without issues
+- ✅ **Progress Tracking**: Shows detailed setup progress with colored output
 
-# OR build and run the entire application in Docker
+**Bash/Git Bash:**
+```bash
+# Make executable and run
+chmod +x docker-seed.sh
+./docker-seed.sh
+```
+
+#### 🔧 **Method 2: Manual Setup (If you prefer step-by-step)**
+
+1. **Create `.env` file** with Docker configuration:
+```env
+# Database Configuration (Docker)
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=grocademy
+
+# Database URL for Prisma (Docker PostgreSQL)
+DATABASE_URL="postgresql://postgres:postgres@db:5432/grocademy?schema=public"
+
+# JWT Secret for Authentication
+JWT_SECRET=your_super_secret_jwt_key_here
+```
+
+2. **First-time setup:**
+```bash
+# Install dependencies locally (needed for Prisma CLI)
+npm install
+
+# Start only the database first
+docker-compose up -d db
+
+# Run migrations and seeding inside Docker containers
+docker-compose run --rm app npx prisma migrate deploy
+docker-compose run --rm app npm run seed:docker
+
+# Start the complete application
 docker-compose up --build
 ```
 
-### Docker Commands
-```bash
-# Start only database
-docker-compose up -d db
+#### ⚡ **Method 3: Quick Daily Development**
 
-# Start all services (database + API)
+**After initial setup (Method 1 or 2), you only need:**
+
+```bash
+# Start both database and application
+docker-compose up --build
+
+# Or run in background
+docker-compose up -d --build
+```
+
+### 🔄 **Understanding Data Persistence & Smart Seeding**
+
+The system now includes **intelligent seeding** that prevents redundant operations:
+
+#### **🧠 Smart Seeding Behavior:**
+- **First Run**: Detects empty database → Creates comprehensive test data
+- **Subsequent Runs**: Detects existing data → Skips seeding, shows credentials
+- **After Volume Reset**: Detects empty database → Re-creates all test data
+
+#### **📊 Data Persistence Scenarios:**
+
+| Action | Database State | Smart Seeding Behavior |
+|--------|----------------|------------------------|
+| `docker compose up` | Data persists | ✅ **Skips seeding** - shows existing credentials |
+| `docker compose restart` | Data persists | ✅ **Skips seeding** - data already exists |
+| `docker compose down` → `up` | Data persists | ✅ **Skips seeding** - volumes preserved |
+| `docker compose down -v` → setup | Data deleted | ✅ **Full seeding** - detects empty database |
+| Volume manually deleted | Data deleted | ✅ **Full seeding** - detects empty database |
+
+#### **🎯 When Setup is Actually Needed:**
+- ✅ **First time running the project**
+- ✅ **After `docker compose down -v` (volumes deleted)**
+- ✅ **After manually deleting Docker volumes**
+- ❌ **NOT needed after normal container stops/starts**
+- ❌ **NOT needed after `docker compose restart`**
+
+### 🛠️ **Daily Development Workflow:**
+
+**First Time:**
+```bash
+.\docker-seed.ps1  # Full setup with seeding
+```
+
+**Every Other Time:**
+```bash
+docker compose up -d  # Just start - data persists
+```
+
+**Reset Everything:**
+```bash
+docker compose down -v  # Delete data
+.\docker-seed.ps1       # Fresh setup
+```
+
+### 🛠️ **When to Re-run Setup:**
+
+| Scenario | Data Status | Action Needed |
+|----------|-------------|---------------|
+| Normal restart | ✅ Persists | Just `docker-compose up` |
+| Volume reset (`-v`) | ❌ Lost | Re-run setup script |
+| First time | ❌ Empty | Run setup script |
+
+### 🔧 **Quick Troubleshooting:**
+
+**Database Connection Issues:**
+```bash
+# Check if database is running
+docker compose ps db
+
+# Check database logs
+docker compose logs db
+
+# Reset everything and try again
+docker compose down -v
+.\docker-seed.ps1
+```
+
+**Seeding Issues:**
+```bash
+# Check migration logs
+docker compose logs db-migrate
+
+# Manual seeding (if needed)
+docker compose exec app node scripts/docker-seed.js
+```
+
+**Application Won't Start:**
+```bash
+# Check app logs
+docker compose logs app
+
+# Restart just the app
+docker compose restart app
+```
+| After `down -v` | ❌ Lost | Re-run `.\docker-seed.ps1` |
+| Fresh clone | ❌ None | Run `.\docker-seed.ps1` |
+| Schema changes | ⚠️ Needs migration | Re-run setup script |
+
+### Docker Commands Reference
+```bash
+# Start all services
 docker-compose up
 
-# Start all services in background
+# Start in background
 docker-compose up -d
+
+# Start with rebuild
+docker-compose up --build
 
 # Stop all services
 docker-compose down
@@ -119,13 +251,10 @@ docker-compose down
 docker-compose logs -f
 
 # View specific service logs
-docker-compose logs -f db
 docker-compose logs -f app
+docker-compose logs -f db
 
-# Rebuild containers
-docker-compose up --build
-
-# Remove all containers and volumes
+# Reset everything (⚠️ This deletes all data)
 docker-compose down -v
 ```
 
@@ -417,26 +546,25 @@ This project is part of the Grocademy platform development.
 
 ## ⚡ Quick Setup Summary
 
-### Docker Development (Recommended for beginners)
+### 🐳 Docker Development (Recommended)
 ```bash
-# 1. Create .env with Docker configuration (Option B)
-# 2. Install dependencies
+# 1. Create .env with Docker configuration
+# 2. Install dependencies (for Prisma CLI)
 npm install
-npx prisma generate
 
-# 3. Start database
+# 3. First-time setup
 docker-compose up -d db
+$env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/grocademy?schema=public"; npx prisma migrate deploy
+$env:DATABASE_URL="postgresql://postgres:postgres@localhost:5432/grocademy?schema=public"; npx prisma db seed
+docker-compose down
 
-# 4. Setup database
-npx prisma migrate dev --name init
-
-# 5. Run application
-npm run build:tsc && npm run start:prod
+# 4. Daily development - just run this!
+docker-compose up --build
 ```
 
-### Local Development
+### 💻 Local Development
 ```bash
-# 1. Create .env with local configuration (Option A)
+# 1. Create .env with local configuration
 # 2. Make sure PostgreSQL is running locally
 # 3. Install dependencies
 npm install
@@ -444,6 +572,7 @@ npx prisma generate
 
 # 4. Setup database
 npx prisma migrate dev --name init
+npx prisma db seed
 
 # 5. Run application
 npm run build:tsc && npm run start:prod
