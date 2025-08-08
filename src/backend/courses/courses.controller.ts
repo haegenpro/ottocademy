@@ -12,13 +12,14 @@ import { /*...,*/ ModulesService } from '../modules/modules.service';
 import { CreateModuleDto } from '../modules/dto/create-module.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
-@UseGuards(AdminGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService,
               private readonly modulesService: ModulesService
   ) {}
 
+  @UseGuards(AdminGuard)
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail_image'))
   create(
@@ -38,6 +39,7 @@ export class CoursesController {
     return this.coursesService.findOne(id);
   }
 
+  @UseGuards(AdminGuard)
   @Put(':id')
   @UseInterceptors(FileInterceptor('thumbnail_image'))
   update(
@@ -48,6 +50,7 @@ export class CoursesController {
     return this.coursesService.update(id, updateCourseDto, file?.path);
   }
 
+  @UseGuards(AdminGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.coursesService.remove(id);
@@ -60,6 +63,7 @@ export class CoursesController {
     return this.coursesService.buy(courseId, userId);
   }
 
+  @UseGuards(AdminGuard)
   @Post(':courseId/modules')
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'pdf_content', maxCount: 1 },
