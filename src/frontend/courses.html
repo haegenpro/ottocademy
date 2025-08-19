@@ -8,26 +8,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="nav border-b">
-        <div class="container">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation -->
+        <nav class="nav border-b">
+            <div class="container">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-4">
+                        <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
+                    </div>
+                    
+                    <ul class="flex items-center space-x-4">
+                        <li><a href="courses.html" class="nav-link active">Browse Courses</a></li>
+                        <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
+                        <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
+                        <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
+                    </ul>
                 </div>
-                
-                <ul class="flex items-center space-x-4">
-                    <li><a href="courses.html" class="nav-link active">Browse Courses</a></li>
-                    <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
-                    <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
-                    <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
-                </ul>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- Main Content -->
-    <main class="container py-8">
+        <!-- Main Content -->
+        <main class="flex-1 container py-8">
         <!-- Hero Section -->
         <section class="text-center mb-8">
             <h1 class="text-4xl font-bold mb-4">Discover Amazing Courses</h1>
@@ -109,6 +110,7 @@
             <!-- Pagination will be dynamically generated -->
         </section>
     </main>
+    </div>
 
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
@@ -376,5 +378,25 @@
             });
         }
     </script>
+
+    <!-- Footer -->
+    <footer class="bg-muted/30 border-t py-6 mt-12">
+        <div class="container">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <div class="text-2xl">🍌</div>
+                    <span class="font-bold text-primary">Grocademy</span>
+                </div>
+                <div class="text-sm text-muted-foreground text-center md:text-right">
+                    <p>© 2025 Grocademy. Learn with the Minions!</p>
+                    <div class="flex items-center justify-center md:justify-end gap-4 mt-2">
+                        <a href="#" class="hover:text-primary transition-colors">Terms</a>
+                        <a href="#" class="hover:text-primary transition-colors">Privacy</a>
+                        <a href="#" class="hover:text-primary transition-colors">Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

@@ -8,7 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="min-h-screen bg-gradient-minion flex items-center justify-center p-4">
+    <div class="min-h-screen flex flex-col">
+        <div class="flex-1 bg-gradient-minion flex items-center justify-center p-4">
         <div class="container text-center">
             <div class="max-w-2xl mx-auto">
                 <!-- Logo and Brand -->
@@ -88,23 +89,6 @@
                         <div class="text-sm text-muted">Lifetime Access</div>
                     </div>
                 </div>
-
-                <!-- Quick Access Demo -->
-                <div class="mt-12 p-6 bg-white/80 backdrop-blur rounded-lg border border-white/20">
-                    <h3 class="mb-4">Try it now with demo credentials:</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-surface rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
-                             onclick="quickLogin('admin')">
-                            <strong>Admin Access</strong><br>
-                            <small class="text-muted">admin@grocademy.com / admin123</small>
-                        </div>
-                        <div class="p-4 bg-surface rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
-                             onclick="quickLogin('user')">
-                            <strong>Student Access</strong><br>
-                            <small class="text-muted">john.doe@example.com / password123</small>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -115,20 +99,6 @@
         if (isAuthenticated()) {
             window.location.href = 'courses.html';
         }
-
-        // Quick login function
-        function quickLogin(type) {
-            const credentials = {
-                admin: { email: 'admin@grocademy.com', password: 'admin123' },
-                user: { email: 'john.doe@example.com', password: 'password123' }
-            };
-
-            const { email, password } = credentials[type];
-            
-            // Redirect to auth page with pre-filled credentials
-            window.location.href = `auth.html?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-        }
-
         // Add some interactive animations
         document.addEventListener('DOMContentLoaded', () => {
             // Animate logo on load
@@ -155,5 +125,25 @@
             });
         });
     </script>
+
+    <!-- Footer -->
+    <footer class="bg-muted/30 border-t py-6 mt-12">
+        <div class="container">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <div class="text-2xl">🍌</div>
+                    <span class="font-bold text-primary">Grocademy</span>
+                </div>
+                <div class="text-sm text-muted-foreground text-center md:text-right">
+                    <p>© 2025 Grocademy. Learn with the Minions!</p>
+                    <div class="flex items-center justify-center md:justify-end gap-4 mt-2">
+                        <a href="#" class="hover:text-primary transition-colors">Terms</a>
+                        <a href="#" class="hover:text-primary transition-colors">Privacy</a>
+                        <a href="#" class="hover:text-primary transition-colors">Support</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
