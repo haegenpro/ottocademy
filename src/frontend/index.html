@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocademy - Learn with the Minions!</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="min-h-screen bg-gradient-minion flex items-center justify-center p-4">
+        <div class="container text-center">
+            <div class="max-w-2xl mx-auto">
+                <!-- Logo and Brand -->
+                <div class="mb-8">
+                    <div class="navbar-brand justify-center mb-6" style="font-size: 3rem;">
+                        <div class="logo" style="width: 80px; height: 80px; font-size: 3rem;">🍌</div>
+                        <span style="color: var(--text); margin-left: 1rem;">Grocademy</span>
+                    </div>
+                    <h1 class="text-4xl md:text-6xl font-bold mb-4" style="color: var(--text);">
+                        Learn with the Minions!
+                    </h1>
+                    <p class="text-xl md:text-2xl text-muted mb-8">
+                        Expand your skills with our comprehensive course library. 
+                        From programming to design, business to data science - we've got you covered! 🚀
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
+                    <a href="auth.html" class="btn btn-primary btn-lg">
+                        🚀 Get Started
+                    </a>
+                    <a href="courses.html" class="btn btn-outline btn-lg" style="color: var(--text); border-color: var(--text);">
+                        Browse Courses
+                    </a>
+                </div>
+
+                <!-- Features -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <div class="card bg-white/90 backdrop-blur">
+                        <div class="card-content text-center">
+                            <div class="text-4xl mb-4">📚</div>
+                            <h3 class="mb-2">Quality Courses</h3>
+                            <p class="text-sm text-muted">
+                                Learn from expertly crafted courses across multiple categories
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-white/90 backdrop-blur">
+                        <div class="card-content text-center">
+                            <div class="text-4xl mb-4">🎯</div>
+                            <h3 class="mb-2">Track Progress</h3>
+                            <p class="text-sm text-muted">
+                                Monitor your learning journey with detailed progress tracking
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card bg-white/90 backdrop-blur">
+                        <div class="card-content text-center">
+                            <div class="text-4xl mb-4">🏆</div>
+                            <h3 class="mb-2">Earn Certificates</h3>
+                            <p class="text-sm text-muted">
+                                Get recognized for your achievements with completion certificates
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold mb-1">10+</div>
+                        <div class="text-sm text-muted">Courses Available</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold mb-1">5</div>
+                        <div class="text-sm text-muted">Categories</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold mb-1">100%</div>
+                        <div class="text-sm text-muted">Interactive</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold mb-1">∞</div>
+                        <div class="text-sm text-muted">Lifetime Access</div>
+                    </div>
+                </div>
+
+                <!-- Quick Access Demo -->
+                <div class="mt-12 p-6 bg-white/80 backdrop-blur rounded-lg border border-white/20">
+                    <h3 class="mb-4">Try it now with demo credentials:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-surface rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
+                             onclick="quickLogin('admin')">
+                            <strong>Admin Access</strong><br>
+                            <small class="text-muted">admin@grocademy.com / admin123</small>
+                        </div>
+                        <div class="p-4 bg-surface rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
+                             onclick="quickLogin('user')">
+                            <strong>Student Access</strong><br>
+                            <small class="text-muted">john.doe@example.com / password123</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Check if already authenticated
+        if (isAuthenticated()) {
+            window.location.href = 'courses.html';
+        }
+
+        // Quick login function
+        function quickLogin(type) {
+            const credentials = {
+                admin: { email: 'admin@grocademy.com', password: 'admin123' },
+                user: { email: 'john.doe@example.com', password: 'password123' }
+            };
+
+            const { email, password } = credentials[type];
+            
+            // Redirect to auth page with pre-filled credentials
+            window.location.href = `auth.html?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+        }
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate logo on load
+            const logo = document.querySelector('.logo');
+            if (logo) {
+                logo.style.transform = 'scale(0)';
+                logo.style.transition = 'transform 0.5s ease-out';
+                setTimeout(() => {
+                    logo.style.transform = 'scale(1)';
+                }, 200);
+            }
+
+            // Animate cards on scroll/load
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 300 + (index * 100));
+            });
+        });
+    </script>
+</body>
+</html>

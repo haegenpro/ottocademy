@@ -1,0 +1,263 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #fbbf24; /* Minion yellow */
+  --primary-foreground: #000000;
+  --secondary: #87ceeb; /* Light blue */
+  --secondary-foreground: #000000;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #000000;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #fbbf24;
+  --chart-1: #fbbf24;
+  --chart-2: #87ceeb;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+.container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Minion theme button styles */
+.btn {
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply bg-primary text-primary-foreground shadow hover:bg-primary/90;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-secondary {
+  @apply bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80;
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.btn-outline {
+  @apply border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground;
+}
+
+.btn-sm {
+  @apply h-8 rounded-md px-3 text-xs;
+}
+
+.btn-md {
+  @apply h-9 px-4 py-2;
+}
+
+.btn-lg {
+  @apply h-10 rounded-md px-8;
+}
+
+/* Card styles */
+.card {
+  @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+}
+
+.card-header {
+  @apply flex flex-col space-y-1.5 p-6;
+}
+
+.card-title {
+  @apply font-semibold leading-none tracking-tight;
+}
+
+.card-description {
+  @apply text-sm text-muted-foreground;
+}
+
+.card-content {
+  @apply p-6 pt-0;
+}
+
+/* Input styles */
+.input {
+  @apply flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.label {
+  @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
+}
+
+/* Navigation styles */
+.nav {
+  @apply border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+}
+
+.nav-link {
+  @apply text-sm font-medium transition-colors hover:text-primary;
+}
+
+.nav-link.active {
+  @apply text-primary;
+}
+
+/* Badge styles */
+.badge {
+  @apply inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+}
+
+.badge-default {
+  @apply border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80;
+}
+
+.badge-secondary {
+  @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.badge-outline {
+  @apply text-foreground;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-minion {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+}
+
+.bg-gradient-soft {
+  background: linear-gradient(to bottom right, var(--background), var(--card), var(--muted));
+}
+
+/* Animation styles */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+/* Loading spinner */
+.spinner {
+  @apply animate-spin rounded-full border-2 border-muted border-t-primary;
+}
+
+/* Course card hover effects */
+.course-card {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+/* Navigation active state */
+.nav-link.active {
+  @apply text-primary font-medium;
+}
+
+/* Toast styles */
+.toast-container {
+  @apply fixed top-4 right-4 z-50 space-y-2;
+}
+
+.toast {
+  @apply px-4 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 transform translate-x-0;
+}
+
+.toast-success {
+  @apply bg-green-500;
+}
+
+.toast-error {
+  @apply bg-red-500;
+}
+
+.toast-info {
+  @apply bg-blue-500;
+}
+
+.toast.fade-out {
+  @apply opacity-0 translate-x-full;
+}
+
+/* Form styles */
+.form-group {
+  @apply mb-4;
+}
+
+/* Module item styles */
+.module-item {
+  @apply border border-gray-200 rounded-lg;
+}
+
+.module-item.active {
+  @apply border-primary bg-primary/10;
+}
+
+/* Progress bar animations */
+.progress-bar {
+  @apply transition-all duration-500 ease-out;
+}
+
+/* Video aspect ratio */
+.aspect-video {
+  aspect-ratio: 16 / 9;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+  
+  .nav {
+    @apply px-4;
+  }
+  
+  .card {
+    @apply mx-2;
+  }
+}
+
+/* Loading states */
+.loading {
+  @apply opacity-50 pointer-events-none;
+}
+
+/* Disabled states */
+.disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Badge variants */
+.badge-success {
+  @apply bg-green-100 text-green-800 border-green-200;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+}
+
+.badge-error {
+  @apply bg-red-100 text-red-800 border-red-200;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800 border-blue-200;
+}

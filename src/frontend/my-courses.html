@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Courses - Grocademy</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav border-b">
+        <div class="container">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
+                </div>
+                
+                <ul class="flex items-center space-x-4">
+                    <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
+                    <li><a href="my-courses.html" class="nav-link active">My Courses</a></li>
+                    <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
+                    <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container py-8">
+        <!-- Header -->
+        <section class="mb-8">
+            <h1 class="text-4xl font-bold mb-4">My Courses</h1>
+            <p class="text-lg text-muted-foreground">
+                Continue your learning journey with your purchased courses
+            </p>
+        </section>
+
+        <!-- Stats Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="card">
+                <div class="card-content text-center">
+                    <div class="text-3xl font-bold text-primary mb-2" id="totalCourses">0</div>
+                    <div class="text-sm text-muted-foreground">Total Courses</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content text-center">
+                    <div class="text-3xl font-bold text-green-600 mb-2" id="completedCourses">0</div>
+                    <div class="text-sm text-muted-foreground">Completed</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content text-center">
+                    <div class="text-3xl font-bold text-blue-600 mb-2" id="inProgressCourses">0</div>
+                    <div class="text-sm text-muted-foreground">In Progress</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="input w-full" 
+                        placeholder="Search your courses..."
+                    >
+                </div>
+                
+                <div class="min-w-48">
+                    <select id="statusFilter" class="input w-full">
+                        <option value="">All Courses</option>
+                        <option value="completed">Completed</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="not-started">Not Started</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center py-8">
+            <div class="spinner w-10 h-10 mx-auto mb-4"></div>
+            <p class="text-muted-foreground">Loading your courses...</p>
+        </div>
+
+        <!-- Courses Grid -->
+        <section id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Courses will be dynamically loaded here -->
+        </section>
+
+        <!-- Empty State -->
+        <section id="emptyState" class="text-center py-12 hidden">
+            <div class="text-6xl mb-4">📚</div>
+            <h3 class="text-xl font-semibold mb-2">No courses found</h3>
+            <p class="text-muted-foreground mb-6">You haven't purchased any courses yet. Start learning today!</p>
+            <a href="courses.html" class="btn btn-primary">
+                Browse Courses
+            </a>
+        </section>
+
+        <!-- Pagination -->
+        <section id="pagination" class="flex justify-center mt-8">
+            <!-- Pagination will be dynamically generated -->
+        </section>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentLimit = 12;
+        let currentSearch = '';
+        let currentStatus = '';
+        let totalPages = 1;
+        let allCourses = [];
+
+        // Check authentication
+        if (!requireAuth()) {
+            throw new Error('Authentication required');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserInfo();
+            await loadMyCourses();
+            setupEventListeners();
+        });
+
+        // Load user information
+        async function loadUserInfo() {
+            try {
+                const profile = await api.getProfile();
+                document.getElementById('userGreeting').textContent = `Hello, ${profile.name}! 👋`;
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                document.getElementById('userGreeting').textContent = 'Hello! 👋';
+            }
+        }
+
+        // Load user's courses
+        async function loadMyCourses() {
+            const spinner = document.getElementById('loadingSpinner');
+            const grid = document.getElementById('coursesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const pagination = document.getElementById('pagination');
+            
+            spinner.classList.remove('hidden');
+            grid.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            pagination.classList.add('hidden');
+
+            try {
+                const response = await api.getMyCourses(currentPage, currentLimit);
+                const courses = response.data || response.courses || response;
+                const meta = response.meta || response.pagination || {};
+
+                allCourses = Array.isArray(courses) ? courses : [];
+
+                if (allCourses.length > 0) {
+                    const filteredCourses = filterCourses(allCourses);
+                    
+                    if (filteredCourses.length > 0) {
+                        displayCourses(filteredCourses);
+                        updateStats(allCourses);
+                        updatePagination(meta);
+                        
+                        grid.classList.remove('hidden');
+                        if (totalPages > 1) {
+                            pagination.classList.remove('hidden');
+                        }
+                    } else {
+                        emptyState.classList.remove('hidden');
+                        updateStats(allCourses);
+                    }
+                } else {
+                    emptyState.classList.remove('hidden');
+                    updateStats([]);
+                }
+
+            } catch (error) {
+                console.error('Failed to load courses:', error);
+                showToast('Failed to load your courses. Please try again.', 'error');
+                emptyState.classList.remove('hidden');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Filter courses based on search and status
+        function filterCourses(courses) {
+            let filtered = courses;
+
+            // Search filter
+            if (currentSearch) {
+                filtered = filtered.filter(course => 
+                    course.title.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    course.instructor.toLowerCase().includes(currentSearch.toLowerCase()) ||
+                    (course.topics && course.topics.some(topic => 
+                        topic.toLowerCase().includes(currentSearch.toLowerCase())
+                    ))
+                );
+            }
+
+            // Status filter
+            if (currentStatus) {
+                filtered = filtered.filter(course => {
+                    const progress = getCourseProgress(course);
+                    switch (currentStatus) {
+                        case 'completed':
+                            return progress === 100;
+                        case 'in-progress':
+                            return progress > 0 && progress < 100;
+                        case 'not-started':
+                            return progress === 0;
+                        default:
+                            return true;
+                    }
+                });
+            }
+
+            return filtered;
+        }
+
+        // Get course progress percentage
+        function getCourseProgress(course) {
+            if (!course.modules || course.modules.length === 0) return 0;
+            
+            const completedModules = course.modules.filter(m => m.isCompleted || m.is_completed);
+            return Math.round((completedModules.length / course.modules.length) * 100);
+        }
+
+        // Display courses in grid
+        function displayCourses(courses) {
+            const grid = document.getElementById('coursesGrid');
+            grid.innerHTML = '';
+
+            courses.forEach(course => {
+                const courseCard = createCourseCard(course);
+                grid.appendChild(courseCard);
+            });
+        }
+
+        // Create course card element
+        function createCourseCard(course) {
+            const card = document.createElement('div');
+            card.className = 'course-card card cursor-pointer';
+            
+            const progress = getCourseProgress(course);
+            const statusBadge = getStatusBadge(progress);
+            
+            // Truncate description
+            const description = course.description.length > 120 
+                ? course.description.substring(0, 120) + '...' 
+                : course.description;
+
+            card.innerHTML = `
+                <div class="course-image bg-gradient-minion h-48 flex items-center justify-center text-4xl rounded-t-lg relative">
+                    ${course.thumbnail_image ? 
+                        `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-t-lg">` : 
+                        '🎓'}
+                    ${statusBadge}
+                </div>
+                <div class="card-content">
+                    <div class="mb-3">
+                        <h3 class="card-title text-lg font-semibold mb-1">${course.title}</h3>
+                        <p class="text-sm text-muted-foreground">👨‍🏫 ${course.instructor}</p>
+                    </div>
+                    
+                    <p class="text-sm text-muted-foreground mb-4">${description}</p>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-medium">Progress</span>
+                            <span class="text-xs text-muted-foreground">${progress}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-primary h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="continueCourse(${course.id})" class="btn btn-primary flex-1 btn-sm">
+                            ${progress === 0 ? 'Start' : progress === 100 ? 'Review' : 'Continue'}
+                        </button>
+                        <button onclick="viewCourseDetails(${course.id})" class="btn btn-outline btn-sm">
+                            Details
+                        </button>
+                    </div>
+
+                    ${progress === 100 ? `
+                        <button onclick="downloadCertificate(${course.id})" class="btn btn-secondary w-full btn-sm mt-2">
+                            📜 Download Certificate
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Get status badge
+        function getStatusBadge(progress) {
+            let badgeClass, badgeText;
+            
+            if (progress === 100) {
+                badgeClass = 'bg-green-100 text-green-800';
+                badgeText = '✅ Completed';
+            } else if (progress > 0) {
+                badgeClass = 'bg-blue-100 text-blue-800';
+                badgeText = '📖 In Progress';
+            } else {
+                badgeClass = 'bg-gray-100 text-gray-800';
+                badgeText = '🆕 Not Started';
+            }
+
+            return `<div class="absolute top-2 right-2 badge ${badgeClass} text-xs">${badgeText}</div>`;
+        }
+
+        // Update statistics
+        function updateStats(courses) {
+            const total = courses.length;
+            const completed = courses.filter(course => getCourseProgress(course) === 100).length;
+            const inProgress = courses.filter(course => {
+                const progress = getCourseProgress(course);
+                return progress > 0 && progress < 100;
+            }).length;
+
+            document.getElementById('totalCourses').textContent = total;
+            document.getElementById('completedCourses').textContent = completed;
+            document.getElementById('inProgressCourses').textContent = inProgress;
+        }
+
+        // Update pagination
+        function updatePagination(meta) {
+            const pagination = document.getElementById('pagination');
+            totalPages = meta.totalPages || Math.ceil((meta.total || 0) / currentLimit);
+            
+            if (totalPages <= 1) {
+                pagination.classList.add('hidden');
+                return;
+            }
+
+            let paginationHTML = '<div class="flex items-center gap-2">';
+            
+            // Previous button
+            paginationHTML += `
+                <button onclick="changePage(${currentPage - 1})" 
+                        class="btn btn-outline btn-sm ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : ''}"
+                        ${currentPage <= 1 ? 'disabled' : ''}>
+                    ← Previous
+                </button>
+            `;
+            
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button onclick="changePage(${i})" 
+                            class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline'}">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button onclick="changePage(${currentPage + 1})" 
+                        class="btn btn-outline btn-sm ${currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
+                        ${currentPage >= totalPages ? 'disabled' : ''}>
+                    Next →
+                </button>
+            `;
+            
+            paginationHTML += '</div>';
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // Change page
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadMyCourses();
+        }
+
+        // Search and filter functions
+        function performSearch() {
+            currentSearch = document.getElementById('searchInput').value.trim();
+            currentStatus = document.getElementById('statusFilter').value;
+            currentPage = 1;
+            loadMyCourses();
+        }
+
+        // Continue course (go to modules)
+        function continueCourse(courseId) {
+            window.location.href = `module.html?courseId=${courseId}`;
+        }
+
+        // View course details
+        function viewCourseDetails(courseId) {
+            window.location.href = `course-detail.html?id=${courseId}`;
+        }
+
+        // Download certificate
+        async function downloadCertificate(courseId) {
+            try {
+                await api.downloadCertificate(courseId);
+                showToast('Certificate download started!', 'success');
+            } catch (error) {
+                console.error('Certificate download failed:', error);
+                showToast('Failed to download certificate. Please try again.', 'error');
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search input
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Status filter change
+            document.getElementById('statusFilter').addEventListener('change', performSearch);
+
+            // Debounced search on input
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(performSearch, 500);
+            });
+        }
+    </script>
+</body>
+</html>
