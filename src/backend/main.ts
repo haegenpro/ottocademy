@@ -11,15 +11,22 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     
-    // Serve static files from the 'frontend' directory
-    app.useStaticAssets(join(__dirname, '..', 'frontend'));
+    // Serve static files from the 'public' directory (clearer separation from backend)
+    app.useStaticAssets(join(process.cwd(), 'public'), {
+      index: false, // Disable auto-serving index.html to avoid conflict with controller
+    });
     
-    // Set the views engine to serve HTML files
-    app.setBaseViewsDir(join(__dirname, '..', 'frontend'));
-    app.setViewEngine('html');
-    
-    // Set global API prefix
-    app.setGlobalPrefix('api');
+    // Set global API prefix for API routes only
+    app.setGlobalPrefix('api', {
+      exclude: [
+        '', // Root route
+        'auth.html',
+        'courses.html', 
+        'course-detail.html',
+        'module.html',
+        'my-courses.html'
+      ]
+    });
     
     // Global exception filter to prevent server crashes
     app.useGlobalFilters(new AllExceptionsFilter());
@@ -37,8 +44,13 @@ async function bootstrap() {
       credentials: true,
     });
 
-    await app.listen(process.env.PORT ?? 3000);
-    logger.log(`Application is running on: http://localhost:${process.env.PORT ?? 3000}`);
+    const port = process.env.PORT ?? 3000;
+
+    // Listen on all interfaces (IPv4 and IPv6)
+    await app.listen(port, '::'); // '::' binds to both IPv4 and IPv6
+    
+    logger.log(`Application is running on: http://localhost:${port}`);
+    logger.log(`Also available on: http://127.0.0.1:${port}`);
   } catch (error) {
     logger.error('❌ Error starting the application', error);
     process.exit(1);
