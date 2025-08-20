@@ -423,12 +423,71 @@ npx prisma studio
 
 ### File Upload Configuration
 
-The backend supports file uploads for:
-- **Course images** (JPG, PNG, WebP)
-- **Module content** (PDF files)
-- **User avatars** (Profile pictures)
+The application includes a comprehensive file upload system for course materials and user content.
 
-Files are stored in `/uploads` directory with proper validation and security measures.
+#### Upload Directory Structure
+
+All uploaded files are organized in the `public/uploads/` directory:
+
+```
+public/uploads/
+├── courses/           # Course thumbnail images
+├── modules/
+│   ├── pdf/          # Module PDF content
+│   └── video/        # Module video content
+└── certificates/     # Generated course certificates
+```
+
+#### Local Development Setup
+
+**Course Thumbnails:**
+- **Location**: `public/uploads/courses/`
+- **Access URL**: `http://localhost:3000/uploads/courses/filename.jpg`
+- **Supported formats**: JPG, PNG, WebP
+- **Recommended size**: 400x300px (4:3 ratio)
+- **Max file size**: 5MB
+
+**Module Content:**
+- **PDFs**: `public/uploads/modules/pdf/`
+- **Videos**: `public/uploads/modules/video/`
+- **Access URL**: `http://localhost:3000/uploads/modules/pdf/filename.pdf`
+- **Supported formats**: MP4/WebM (video), PDF (documents)
+- **Max file size**: 100MB (videos), 50MB (PDFs)
+
+#### Development Testing Images
+
+For testing purposes, you can:
+
+1. **Add sample images** to `public/uploads/courses/`:
+   - business.jpg, programming.jpg, design.jpg, etc.
+
+2. **Use placeholder services**:
+   - Random images: `https://picsum.photos/400/300`
+   - Branded placeholders: `https://via.placeholder.com/400x300/FFD700/000000?text=Course`
+
+#### Production Deployment Options
+
+**Option 1: Azure Blob Storage (Recommended)**
+- Service: Azure Storage Account with Blob containers
+- CDN: Azure CDN for global content delivery
+- Cost: ~$90/month for moderate usage
+- Benefits: Scalable, secure, globally distributed
+
+**Option 2: Azure App Service File System**
+- Service: Direct file storage on App Service
+- Limitations: Files lost during deployments
+- Not recommended for production
+
+**Option 3: Azure Files**
+- Service: SMB file shares in the cloud
+- Mount: Can be mounted to App Service
+- Persistence: Data persists across deployments
+
+**Security Features:**
+- File type validation and sanitization
+- Size limit enforcement
+- Secure file naming and path handling
+- Access control based on user permissions
 
 ## 🚢 Deployment
 

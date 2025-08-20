@@ -1,0 +1,19 @@
+# Course Images Directory
+
+Place your course thumbnail images here.
+
+Recommended formats:
+- .jpg, .jpeg, .png, .webp
+- Recommended size: 400x300px or 16:9 aspect ratio
+- Max file size: 5MB
+
+Example files you can add:
+- business-course.jpg
+- web-development.jpg
+- data-science.jpg
+- machine-learning.jpg
+- design-fundamentals.jpg
+
+For development, you can use placeholder services like:
+- https://picsum.photos/400/300 (random images)
+- https://via.placeholder.com/400x300 (solid color placeholders)

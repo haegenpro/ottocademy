@@ -106,7 +106,8 @@
         async function loadUserInfo() {
             try {
                 const profile = await api.getProfile();
-                document.getElementById('userGreeting').textContent = `Hello, ${profile.name}! 👋`;
+                const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
+                document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
@@ -171,13 +172,23 @@
             
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             const isPurchased = course.isPurchased || course.is_purchased;
+            
+            // Generate a consistent placeholder image based on course title
+            const getPlaceholderImage = (title) => {
+                const hash = title.split('').reduce((a, b) => {
+                    a = ((a << 5) - a) + b.charCodeAt(0);
+                    return a & a;
+                }, 0);
+                const imageId = Math.abs(hash) % 1000 + 1;
+                return `https://picsum.photos/400/300?random=${imageId}`;
+            };
 
             card.innerHTML = `
                 <div class="relative overflow-hidden">
                     <div class="h-56 bg-gradient-minion flex items-center justify-center">
                         ${course.thumbnail_image ? 
-                            `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">` : 
-                            '<span class="text-6xl">🎓</span>'}
+                            `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}';">` : 
+                            `<img src="${getPlaceholderImage(course.title)}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">`}
                     </div>
                     <div class="absolute top-4 right-4 badge ${isPurchased ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'} font-bold text-sm">
                         ${isPurchased ? 'Enrolled' : price}
