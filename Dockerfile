@@ -22,7 +22,7 @@ COPY package*.json ./
 RUN npm install --omit=dev
 COPY --from=build /usr/src/app/dist ./dist
 
-# Copy frontend assets to /usr/src/app/public (clearer separation)
+# Copy frontend assets to /usr/src/app/public
 COPY --from=build /usr/src/app/src/frontend ./public
 
 # Copy Prisma files

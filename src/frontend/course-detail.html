@@ -5,18 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Details - Grocademy</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="nav border-b">
+<body class="bg-background">
+    <nav class="nav">
         <div class="container">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
-                </div>
-                
-                <ul class="flex items-center space-x-4">
+            <div class="flex items-center justify-between h-20">
+                <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                    <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
+                    <span>Grocademy</span>
+                </a>
+                <ul class="flex items-center space-x-6">
                     <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
                     <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
                     <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
@@ -26,122 +25,68 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="container py-8">
-        <!-- Back Button -->
+    <main class="container py-12">
         <div class="mb-6">
             <button onclick="history.back()" class="btn btn-outline">
-                ← Back to Courses
+                ← Back
             </button>
         </div>
 
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center py-12">
+        <div id="loadingSpinner" class="text-center py-24">
             <div class="spinner w-12 h-12 mx-auto mb-4"></div>
             <p class="text-muted-foreground">Loading course details...</p>
         </div>
 
-        <!-- Course Details -->
         <div id="courseDetails" class="hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Main Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                 <div class="lg:col-span-2">
-                    <!-- Course Header -->
-                    <div class="mb-8">
-                        <div id="courseImage" class="w-full h-64 bg-gradient-minion rounded-lg mb-6 flex items-center justify-center text-6xl">
-                            🎓
+                    <div id="courseImage" class="w-full h-80 bg-gradient-minion rounded-xl mb-6 flex items-center justify-center text-6xl shadow-lg">🎓</div>
+                    <div id="courseTopics" class="flex flex-wrap gap-2 mb-4"></div>
+                    <h1 id="courseTitle" class="text-4xl lg:text-5xl font-extrabold mb-4"></h1>
+                    <p id="courseInstructor" class="text-lg text-muted-foreground mb-8"></p>
+                    
+                    <div class="card mb-8">
+                        <div class="card-header">
+                            <h2 class="card-title">About This Course</h2>
                         </div>
-                        
-                        <h1 id="courseTitle" class="text-4xl font-bold mb-4">Course Title</h1>
-                        <p id="courseInstructor" class="text-lg text-muted-foreground mb-4">👨‍🏫 Instructor Name</p>
-                        
-                        <!-- Topics -->
-                        <div id="courseTopics" class="flex flex-wrap gap-2 mb-6">
-                            <!-- Topics will be populated here -->
-                        </div>
-                        
-                        <!-- Course Description -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">About This Course</h2>
-                            </div>
-                            <div class="card-content">
-                                <p id="courseDescription" class="text-muted-foreground leading-relaxed">
-                                    Course description will be loaded here...
-                                </p>
-                            </div>
+                        <div class="card-content">
+                            <p id="courseDescription" class="text-muted-foreground leading-relaxed"></p>
                         </div>
                     </div>
 
-                    <!-- Course Modules (if purchased) -->
                     <div id="courseModules" class="hidden">
                         <div class="card">
                             <div class="card-header">
-                                <h2 class="card-title">Course Modules</h2>
-                                <div id="progressBar" class="mt-4">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-sm font-medium">Progress</span>
-                                        <span id="progressText" class="text-sm text-muted-foreground">0% Complete</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div id="progressFill" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                    </div>
-                                </div>
+                                <h2 class="card-title">Course Curriculum</h2>
                             </div>
-                            <div class="card-content">
-                                <div id="modulesList">
-                                    <!-- Modules will be populated here -->
+                            <div class="p-6 divide-y divide-border" id="modulesList">
                                 </div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sidebar -->
                 <div class="lg:col-span-1">
-                    <div class="card sticky top-8">
-                        <div class="card-content">
-                            <!-- Price -->
+                    <div class="card sticky top-28">
+                        <div class="p-6">
                             <div class="text-center mb-6">
-                                <div id="coursePrice" class="text-3xl font-bold text-primary mb-2">Free</div>
-                                <div id="courseStatus" class="text-sm text-muted-foreground">Status</div>
+                                <div id="coursePrice" class="text-4xl font-extrabold text-primary mb-2"></div>
+                                <div id="courseStatus" class="badge bg-green-100 text-green-800"></div>
                             </div>
-
-                            <!-- Action Buttons -->
-                            <div id="actionButtons" class="space-y-3">
-                                <!-- Buttons will be populated based on purchase status -->
-                            </div>
-
-                            <!-- Course Stats -->
-                            <div class="mt-8 pt-6 border-t border-gray-200">
-                                <h3 class="font-semibold mb-4">Course Information</h3>
-                                <div class="space-y-3">
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Modules</span>
-                                        <span id="modulesCount">-</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Level</span>
-                                        <span>Beginner</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-muted-foreground">Access</span>
-                                        <span>Lifetime</span>
-                                    </div>
-                                </div>
+                            <div id="actionButtons" class="space-y-3 mb-6"></div>
+                            
+                            <div class="mt-6 pt-6 border-t">
+                                <h3 class="font-semibold mb-4">Course Includes:</h3>
+                                <ul class="space-y-3 text-sm text-muted-foreground">
+                                    <li class="flex items-center gap-2"><span>📦</span> <span id="modulesCount">-</span> Modules</li>
+                                    <li class="flex items-center gap-2"><span>📈</span> Beginner Level</li>
+                                    <li class="flex items-center gap-2"><span>⏳</span> Lifetime Access</li>
+                                    <li class="flex items-center gap-2"><span>🏆</span> Certificate of Completion</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="errorState" class="text-center py-12 hidden">
-            <div class="text-6xl mb-4">⚠️</div>
-            <h2 class="text-2xl font-bold mb-2">Course Not Found</h2>
-            <p class="text-muted-foreground mb-6">The course you're looking for doesn't exist or has been removed.</p>
-            <a href="courses.html" class="btn btn-primary">Browse All Courses</a>
         </div>
     </main>
 
@@ -164,7 +109,7 @@
     </div>
 
     <!-- Toast Container -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toast-container"></div>
 
     <script src="js/api.js"></script>
     <script>
@@ -223,35 +168,48 @@
 
         // Display course details
         function displayCourseDetails(course) {
-            // Basic info
+            document.title = `${course.title} - Grocademy`;
             document.getElementById('courseTitle').textContent = course.title;
-            document.getElementById('courseInstructor').textContent = `👨‍🏫 ${course.instructor}`;
+            document.getElementById('courseInstructor').textContent = `👨‍🏫 By ${course.instructor}`;
             document.getElementById('courseDescription').textContent = course.description;
 
-            // Course image
-            const imageContainer = document.getElementById('courseImage');
             if (course.thumbnail_image) {
-                imageContainer.innerHTML = `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-lg">`;
+                document.getElementById('courseImage').innerHTML = `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-xl shadow-lg">`;
             }
 
-            // Topics
             const topicsContainer = document.getElementById('courseTopics');
-            if (course.topics && course.topics.length > 0) {
-                topicsContainer.innerHTML = course.topics.map(topic => 
-                    `<span class="badge badge-outline">${topic}</span>`
-                ).join('');
-            }
-
-            // Price and status
+            topicsContainer.innerHTML = (course.topics || []).map(topic => `<span class="badge badge-outline">${topic}</span>`).join('');
+            
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             document.getElementById('coursePrice').textContent = price;
-
+            
             const isPurchased = course.isPurchased || course.is_purchased;
-            const statusText = isPurchased ? 'Purchased' : 'Available for Purchase';
+            const statusText = isPurchased ? 'You are enrolled' : 'Available for purchase';
             document.getElementById('courseStatus').textContent = statusText;
-
-            // Action buttons
+            
             displayActionButtons(course, isPurchased);
+        }
+
+        function displayModules(modules) {
+            const container = document.getElementById('modulesList');
+            container.innerHTML = ''; // Clear first
+            modules.forEach((module, index) => {
+                const isCompleted = module.isCompleted || module.is_completed;
+                container.innerHTML += `
+                    <div class="py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="text-2xl">${isCompleted ? '✅' : '📖'}</div>
+                            <div>
+                                <h4 class="font-semibold">${module.title}</h4>
+                                <p class="text-sm text-muted-foreground">${module.description}</p>
+                            </div>
+                        </div>
+                        <button onclick="openModule(${module.id})" class="btn btn-outline btn-sm">
+                            ${isPurchased ? (isCompleted ? 'Review' : 'Start') : 'View'}
+                        </button>
+                    </div>
+                `;
+            });
         }
 
         // Display action buttons
@@ -297,37 +255,6 @@
             } catch (error) {
                 console.error('Failed to load course modules:', error);
             }
-        }
-
-        // Display modules
-        function displayModules(modules) {
-            const container = document.getElementById('modulesList');
-            container.innerHTML = '';
-
-            modules.forEach((module, index) => {
-                const isCompleted = module.isCompleted || module.is_completed;
-                const moduleElement = document.createElement('div');
-                moduleElement.className = `module-item border-b border-gray-200 py-4 ${index === modules.length - 1 ? 'border-b-0' : ''}`;
-                
-                moduleElement.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="text-xl">
-                                ${isCompleted ? '✅' : '📖'}
-                            </div>
-                            <div>
-                                <h4 class="font-medium">${module.title}</h4>
-                                <p class="text-sm text-muted-foreground">${module.description}</p>
-                            </div>
-                        </div>
-                        <button onclick="openModule(${module.id})" class="btn btn-outline btn-sm">
-                            ${isCompleted ? 'Review' : 'Start'}
-                        </button>
-                    </div>
-                `;
-
-                container.appendChild(moduleElement);
-            });
         }
 
         // Update progress bar

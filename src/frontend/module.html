@@ -5,203 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Module - Grocademy</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="nav border-b">
+<body class="bg-background">
+    <nav class="nav">
         <div class="container">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
-                </div>
-                
-                <ul class="flex items-center space-x-4">
-                    <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
-                    <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
-                    <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
-                    <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
-                </ul>
+            <div class="flex items-center justify-between h-20">
+                <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                    <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
+                    <span id="courseBreadcrumb">Grocademy</span>
+                </a>
+                <button onclick="goBackToCourse()" class="btn btn-outline btn-sm">← Back to Course Details</button>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="container py-8">
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center py-12">
-            <div class="spinner w-12 h-12 mx-auto mb-4"></div>
-            <p class="text-muted-foreground">Loading course content...</p>
-        </div>
+    <main class="container py-12">
+        <div id="loadingSpinner" class="text-center py-24">...</div>
 
-        <!-- Course Content -->
         <div id="courseContent" class="hidden">
-            <!-- Course Header -->
-            <div class="mb-8">
-                <nav class="text-sm text-muted-foreground mb-4">
-                    <a href="my-courses.html" class="hover:text-primary">My Courses</a>
-                    <span class="mx-2">›</span>
-                    <span id="courseBreadcrumb">Course</span>
-                </nav>
-                
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h1 id="courseTitle" class="text-3xl font-bold mb-2">Course Title</h1>
-                        <p id="courseInstructor" class="text-muted-foreground">👨‍🏫 Instructor</p>
-                    </div>
-                    <button onclick="goBackToCourse()" class="btn btn-outline">
-                        ← Back to Course
-                    </button>
+            <div class="card p-6 mb-8">
+                <div class="flex justify-between items-center mb-2 font-semibold">
+                    <span>Course Progress</span>
+                    <span id="progressText">0%</span>
                 </div>
-
-                <!-- Progress Bar -->
-                <div class="card mb-6">
-                    <div class="card-content">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-medium">Course Progress</span>
-                            <span id="progressText" class="text-sm text-muted-foreground">0% Complete</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div id="progressFill" class="bg-primary h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                        <div class="flex justify-between text-xs text-muted-foreground mt-1">
-                            <span id="completedModules">0 completed</span>
-                            <span id="totalModules">0 total modules</span>
-                        </div>
-                    </div>
+                <div class="w-full bg-muted rounded-full h-4">
+                    <div id="progressFill" class="bg-primary h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
             </div>
 
-            <!-- Module Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <!-- Module List Sidebar -->
-                <div class="lg:col-span-1">
-                    <div class="card sticky top-8">
+                <aside class="lg:col-span-1">
+                    <div class="card sticky top-28">
                         <div class="card-header">
-                            <h3 class="card-title">Course Modules</h3>
+                            <h3 class="card-title">Modules</h3>
                         </div>
-                        <div class="card-content">
-                            <div id="modulesList" class="space-y-2">
-                                <!-- Modules will be populated here -->
+                        <div id="modulesList" class="p-4 space-y-2">
                             </div>
-                        </div>
                     </div>
-                </div>
+                </aside>
 
-                <!-- Module Content -->
                 <div class="lg:col-span-3">
-                    <!-- Module not selected -->
-                    <div id="noModuleSelected" class="card">
-                        <div class="card-content text-center py-12">
-                            <div class="text-6xl mb-4">📖</div>
-                            <h3 class="text-xl font-semibold mb-2">Select a Module</h3>
-                            <p class="text-muted-foreground">Choose a module from the sidebar to start learning</p>
-                        </div>
-                    </div>
-
-                    <!-- Module Content Area -->
-                    <div id="moduleContentArea" class="hidden">
-                        <!-- Module Header -->
-                        <div class="card mb-6">
-                            <div class="card-content">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h2 id="moduleTitle" class="text-2xl font-bold mb-2">Module Title</h2>
-                                        <p id="moduleDescription" class="text-muted-foreground">Module description</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <div id="moduleStatus" class="badge badge-outline">Not Started</div>
-                                        <button id="completeModuleBtn" onclick="toggleModuleCompletion()" class="btn btn-primary btn-sm">
-                                            Mark Complete
-                                        </button>
-                                    </div>
+                    <div id="moduleContentArea" class="space-y-6">
+                        <div class="card p-6">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h2 id="moduleTitle" class="text-3xl font-bold"></h2>
+                                    <p id="moduleDescription" class="text-muted-foreground"></p>
                                 </div>
+                                <button id="completeModuleBtn" onclick="toggleModuleCompletion()" class="btn btn-primary">Mark as Complete</button>
                             </div>
                         </div>
-
-                        <!-- Module Content Tabs -->
                         <div class="card">
-                            <div class="card-header">
-                                <div class="flex gap-2" id="contentTabs">
-                                    <button id="pdfTab" onclick="switchContentTab('pdf')" class="btn btn-outline btn-sm hidden">
-                                        📄 PDF Content
-                                    </button>
-                                    <button id="videoTab" onclick="switchContentTab('video')" class="btn btn-outline btn-sm hidden">
-                                        🎥 Video Content
-                                    </button>
-                                </div>
+                            <div id="videoContent" class="hidden aspect-video bg-black rounded-xl">
+                                <video id="videoPlayer" controls class="w-full h-full rounded-xl"></video>
                             </div>
-                            <div class="card-content">
-                                <!-- PDF Viewer -->
-                                <div id="pdfContent" class="hidden">
-                                    <div class="text-center p-8">
-                                        <div class="text-4xl mb-4">📄</div>
-                                        <p class="text-muted-foreground mb-4">PDF content available for this module</p>
-                                        <a id="pdfDownloadLink" href="#" target="_blank" class="btn btn-primary">
-                                            Open PDF
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <!-- Video Player -->
-                                <div id="videoContent" class="hidden">
-                                    <div class="aspect-video bg-black rounded-lg flex items-center justify-center">
-                                        <video id="videoPlayer" controls class="w-full h-full rounded-lg hidden">
-                                            Your browser does not support the video tag.
-                                        </video>
-                                        <div id="videoPlaceholder" class="text-center text-white">
-                                            <div class="text-4xl mb-4">🎥</div>
-                                            <p>Video content will be loaded here</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- No Content -->
-                                <div id="noContent" class="text-center py-12">
-                                    <div class="text-6xl mb-4">📚</div>
-                                    <h3 class="text-xl font-semibold mb-2">No Content Available</h3>
-                                    <p class="text-muted-foreground">This module doesn't have any content yet.</p>
-                                </div>
+                            <div id="certificateSection" class="hidden text-center p-12">
+                                 <div class="text-7xl mb-4">🎉</div>
+                                <h2 class="text-3xl font-bold mb-2">Congratulations!</h2>
+                                <p class="text-muted-foreground mb-6">You've completed the course!</p>
+                                <button onclick="downloadCertificate()" class="btn btn-primary btn-lg">📜 Download Certificate</button>
                             </div>
                         </div>
-
-                        <!-- Module Navigation -->
-                        <div class="flex justify-between items-center mt-6">
-                            <button id="prevModuleBtn" onclick="navigateModule('prev')" class="btn btn-outline" disabled>
-                                ← Previous Module
-                            </button>
-                            <button id="nextModuleBtn" onclick="navigateModule('next')" class="btn btn-primary" disabled>
-                                Next Module →
-                            </button>
+                        <div class="flex justify-between items-center">
+                            <button id="prevModuleBtn" onclick="navigateModule('prev')" class="btn btn-outline">← Previous</button>
+                            <button id="nextModuleBtn" onclick="navigateModule('next')" class="btn btn-primary">Next →</button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Certificate Section -->
-            <div id="certificateSection" class="card mt-8 hidden">
-                <div class="card-content text-center">
-                    <div class="text-6xl mb-4">🎉</div>
-                    <h2 class="text-2xl font-bold mb-2">Congratulations!</h2>
-                    <p class="text-muted-foreground mb-6">You have completed all modules in this course.</p>
-                    <button onclick="downloadCertificate()" class="btn btn-primary btn-lg">
-                        📜 Download Certificate
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Error State -->
-        <div id="errorState" class="text-center py-12 hidden">
-            <div class="text-6xl mb-4">⚠️</div>
-            <h2 class="text-2xl font-bold mb-2">Access Denied</h2>
-            <p class="text-muted-foreground mb-6">You don't have access to this course or it doesn't exist.</p>
-            <a href="courses.html" class="btn btn-primary">Browse Courses</a>
         </div>
     </main>
 
     <!-- Toast Container -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toast-container"></div>
 
     <script src="js/api.js"></script>
     <script>
@@ -293,32 +170,56 @@
         function displayModulesList() {
             const container = document.getElementById('modulesList');
             container.innerHTML = '';
-
             courseModules.forEach((module, index) => {
                 const isCompleted = module.isCompleted || module.is_completed;
-                const moduleItem = document.createElement('div');
-                moduleItem.className = `module-item p-3 rounded-lg cursor-pointer transition-colors ${
-                    currentModuleIndex === index ? 'bg-primary text-white' : 'hover:bg-gray-100'
+                const isActive = currentModuleIndex === index;
+                
+                const moduleItem = document.createElement('button');
+                moduleItem.className = `w-full text-left p-3 rounded-lg flex items-center gap-3 transition-colors ${
+                    isActive ? 'bg-primary/20' : 'hover:bg-muted'
                 }`;
                 
                 moduleItem.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <div class="text-lg">
-                            ${isCompleted ? '✅' : '📖'}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-medium text-sm truncate">${module.title}</h4>
-                            <p class="text-xs opacity-75 truncate">${module.description}</p>
-                        </div>
-                    </div>
+                    <div class="text-lg">${isCompleted ? '✅' : '📖'}</div>
+                    <span class="font-medium text-sm">${module.title}</span>
                 `;
-
                 moduleItem.onclick = () => selectModule(index);
                 container.appendChild(moduleItem);
             });
+        }
 
-            // Update total modules count
-            document.getElementById('totalModules').textContent = `${courseModules.length} total modules`;
+        function displayModuleContent(module) {
+            document.getElementById('moduleTitle').textContent = module.title;
+            document.getElementById('moduleDescription').textContent = module.description;
+            
+            const completeBtn = document.getElementById('completeModuleBtn');
+            const isCompleted = module.isCompleted || module.is_completed;
+            
+            completeBtn.textContent = isCompleted ? 'Mark Incomplete' : 'Mark as Complete';
+            completeBtn.className = `btn btn-sm ${isCompleted ? 'btn-outline' : 'btn-primary'}`;
+            
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoContent = document.getElementById('videoContent');
+            const certSection = document.getElementById('certificateSection');
+
+            videoContent.classList.add('hidden');
+            certSection.classList.add('hidden'); // Hide by default
+
+            if(module.video_content) {
+                videoPlayer.src = module.video_content;
+                videoContent.classList.remove('hidden');
+            }
+        }
+        
+        function checkCourseCompletion() {
+            const completedCount = courseModules.filter(m => m.isCompleted || m.is_completed).length;
+            const allCompleted = courseModules.length > 0 && completedCount === courseModules.length;
+            if (allCompleted) {
+                document.getElementById('certificateSection').classList.remove('hidden');
+                 document.getElementById('videoContent').classList.add('hidden');
+            } else {
+                 document.getElementById('certificateSection').classList.add('hidden');
+            }
         }
 
         // Select a module
@@ -340,33 +241,6 @@
             // Show module content area
             document.getElementById('noModuleSelected').classList.add('hidden');
             document.getElementById('moduleContentArea').classList.remove('hidden');
-        }
-
-        // Display module content
-        function displayModuleContent(module) {
-            // Module header
-            document.getElementById('moduleTitle').textContent = module.title;
-            document.getElementById('moduleDescription').textContent = module.description;
-
-            // Module status
-            const isCompleted = module.isCompleted || module.is_completed;
-            const statusElement = document.getElementById('moduleStatus');
-            const completeBtn = document.getElementById('completeModuleBtn');
-
-            if (isCompleted) {
-                statusElement.textContent = '✅ Completed';
-                statusElement.className = 'badge bg-green-100 text-green-800';
-                completeBtn.textContent = 'Mark Incomplete';
-                completeBtn.className = 'btn btn-outline btn-sm';
-            } else {
-                statusElement.textContent = '📖 In Progress';
-                statusElement.className = 'badge bg-blue-100 text-blue-800';
-                completeBtn.textContent = 'Mark Complete';
-                completeBtn.className = 'btn btn-primary btn-sm';
-            }
-
-            // Content tabs
-            setupContentTabs(module);
         }
 
         // Setup content tabs
@@ -498,19 +372,6 @@
         function navigateModule(direction) {
             const newIndex = direction === 'prev' ? currentModuleIndex - 1 : currentModuleIndex + 1;
             selectModule(newIndex);
-        }
-
-        // Check course completion
-        function checkCourseCompletion() {
-            const completedCount = courseModules.filter(m => m.isCompleted || m.is_completed).length;
-            const isCompleted = completedCount === courseModules.length && courseModules.length > 0;
-
-            const certificateSection = document.getElementById('certificateSection');
-            if (isCompleted) {
-                certificateSection.classList.remove('hidden');
-            } else {
-                certificateSection.classList.add('hidden');
-            }
         }
 
         // Download certificate

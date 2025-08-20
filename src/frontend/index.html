@@ -5,145 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grocademy - Learn with the Minions!</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="min-h-screen flex flex-col">
-        <div class="flex-1 bg-gradient-minion flex items-center justify-center p-4">
-        <div class="container text-center">
-            <div class="max-w-2xl mx-auto">
-                <!-- Logo and Brand -->
-                <div class="mb-8">
-                    <div class="navbar-brand justify-center mb-6" style="font-size: 3rem;">
-                        <div class="logo" style="width: 80px; height: 80px; font-size: 3rem;">🍌</div>
-                        <span style="color: var(--text); margin-left: 1rem;">Grocademy</span>
-                    </div>
-                    <h1 class="text-4xl md:text-6xl font-bold mb-4" style="color: var(--text);">
-                        Learn with the Minions!
-                    </h1>
-                    <p class="text-xl md:text-2xl text-muted mb-8">
-                        Expand your skills with our comprehensive course library. 
-                        From programming to design, business to data science - we've got you covered! 🚀
-                    </p>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
-                    <a href="auth.html" class="btn btn-primary btn-lg">
-                        🚀 Get Started
-                    </a>
-                    <a href="courses.html" class="btn btn-outline btn-lg" style="color: var(--text); border-color: var(--text);">
-                        Browse Courses
-                    </a>
-                </div>
-
-                <!-- Features -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                    <div class="card bg-white/90 backdrop-blur">
-                        <div class="card-content text-center">
-                            <div class="text-4xl mb-4">📚</div>
-                            <h3 class="mb-2">Quality Courses</h3>
-                            <p class="text-sm text-muted">
-                                Learn from expertly crafted courses across multiple categories
-                            </p>
+<body class="bg-background">
+    <div class="flex flex-col min-h-screen">
+        <main class="flex-1">
+            <section class="bg-gradient-minion py-20 sm:py-32">
+                <div class="container text-center">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex justify-center items-center gap-4 mb-6">
+                            <div class="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center text-5xl animate-bounce">🍌</div>
+                            <span class="text-5xl font-extrabold text-white">Grocademy</span>
                         </div>
-                    </div>
 
-                    <div class="card bg-white/90 backdrop-blur">
-                        <div class="card-content text-center">
-                            <div class="text-4xl mb-4">🎯</div>
-                            <h3 class="mb-2">Track Progress</h3>
-                            <p class="text-sm text-muted">
-                                Monitor your learning journey with detailed progress tracking
-                            </p>
-                        </div>
-                    </div>
+                        <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+                            Learn with the Minions!
+                        </h1>
+                        <p class="text-lg md:text-xl text-white/90 mb-10">
+                            Expand your skills with our comprehensive course library. From programming to design, business to data science - we've got you covered! 🚀
+                        </p>
 
-                    <div class="card bg-white/90 backdrop-blur">
-                        <div class="card-content text-center">
-                            <div class="text-4xl mb-4">🏆</div>
-                            <h3 class="mb-2">Earn Certificates</h3>
-                            <p class="text-sm text-muted">
-                                Get recognized for your achievements with completion certificates
-                            </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a href="auth.html" class="btn btn-secondary btn-lg">
+                                🚀 Get Started
+                            </a>
+                            <a href="courses.html" class="btn btn-lg bg-white/20 text-white border-white/20 hover:bg-white/30">
+                                Browse Courses
+                            </a>
                         </div>
                     </div>
                 </div>
+            </section>
+            
+            <section class="py-16 sm:py-24">
+                <div class="container">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+                            <div class="p-6">
+                                <div class="text-5xl mb-4">📚</div>
+                                <h3 class="card-title mb-2">Quality Courses</h3>
+                                <p class="text-muted-foreground">
+                                    Learn from expertly crafted courses across multiple categories.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+                            <div class="p-6">
+                                <div class="text-5xl mb-4">🎯</div>
+                                <h3 class="card-title mb-2">Track Progress</h3>
+                                <p class="text-muted-foreground">
+                                    Monitor your learning journey with detailed progress tracking.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
+                            <div class="p-6">
+                                <div class="text-5xl mb-4">🏆</div>
+                                <h3 class="card-title mb-2">Earn Certificates</h3>
+                                <p class="text-muted-foreground">
+                                    Get recognized for your achievements with completion certificates.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold mb-1">10+</div>
-                        <div class="text-sm text-muted">Courses Available</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold mb-1">5</div>
-                        <div class="text-sm text-muted">Categories</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold mb-1">100%</div>
-                        <div class="text-sm text-muted">Interactive</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold mb-1">∞</div>
-                        <div class="text-sm text-muted">Lifetime Access</div>
+                    <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                        <div>
+                            <div class="text-4xl font-extrabold text-primary mb-1">10+</div>
+                            <div class="text-muted-foreground">Courses Available</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-extrabold text-primary mb-1">5</div>
+                            <div class="text-muted-foreground">Categories</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-extrabold text-primary mb-1">100%</div>
+                            <div class="text-muted-foreground">Interactive</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-extrabold text-primary mb-1">∞</div>
+                            <div class="text-muted-foreground">Lifetime Access</div>
+                        </div>
                     </div>
                 </div>
+            </section>
+        </main>
+
+        <footer class="bg-muted/50 border-t py-8">
+            <div class="container text-center text-muted-foreground">
+                <p>© 2025 Grocademy. All Rights Reserved.</p>
             </div>
-        </div>
+        </footer>
     </div>
 
     <script src="js/api.js"></script>
     <script>
-        // Check if already authenticated
         if (isAuthenticated()) {
             window.location.href = 'courses.html';
         }
-        // Add some interactive animations
-        document.addEventListener('DOMContentLoaded', () => {
-            // Animate logo on load
-            const logo = document.querySelector('.logo');
-            if (logo) {
-                logo.style.transform = 'scale(0)';
-                logo.style.transition = 'transform 0.5s ease-out';
-                setTimeout(() => {
-                    logo.style.transform = 'scale(1)';
-                }, 200);
-            }
-
-            // Animate cards on scroll/load
-            const cards = document.querySelectorAll('.card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
-                
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 300 + (index * 100));
-            });
-        });
     </script>
-
-    <!-- Footer -->
-    <footer class="bg-muted/30 border-t py-6 mt-12">
-        <div class="container">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center space-x-2">
-                    <div class="text-2xl">🍌</div>
-                    <span class="font-bold text-primary">Grocademy</span>
-                </div>
-                <div class="text-sm text-muted-foreground text-center md:text-right">
-                    <p>© 2025 Grocademy. Learn with the Minions!</p>
-                    <div class="flex items-center justify-center md:justify-end gap-4 mt-2">
-                        <a href="#" class="hover:text-primary transition-colors">Terms</a>
-                        <a href="#" class="hover:text-primary transition-colors">Privacy</a>
-                        <a href="#" class="hover:text-primary transition-colors">Support</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
 </body>
 </html>

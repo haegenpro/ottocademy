@@ -5,19 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Courses - Grocademy</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-background">
     <div class="min-h-screen flex flex-col">
-        <!-- Navigation -->
-        <nav class="nav border-b">
+        <nav class="nav">
             <div class="container">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center space-x-4">
-                        <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
-                    </div>
-                    
-                    <ul class="flex items-center space-x-4">
+                <div class="flex items-center justify-between h-20">
+                    <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                        <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
+                        <span>Grocademy</span>
+                    </a>
+                    <ul class="flex items-center space-x-6">
                         <li><a href="courses.html" class="nav-link active">Browse Courses</a></li>
                         <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
                         <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
@@ -27,89 +26,57 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <main class="flex-1 container py-8">
-        <!-- Hero Section -->
-        <section class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-4">Discover Amazing Courses</h1>
-            <p class="text-lg text-muted-foreground mb-6">
-                Learn with the Minions and expand your skills with our comprehensive course library
-            </p>
-        </section>
+        <main class="flex-1 container py-12">
+            <section class="text-center mb-12">
+                <h1 class="text-5xl font-extrabold mb-4">Discover Amazing Courses</h1>
+                <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+                    Learn with the Minions and expand your skills with our comprehensive course library.
+                </p>
+            </section>
 
-        <!-- Search and Filters -->
-        <section class="mb-8">
-            <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <div class="flex-1">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        class="input w-full" 
-                        placeholder="Search courses by title, instructor, or topic..."
-                    >
+            <section class="mb-8 p-6 card">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div class="md:col-span-2">
+                        <label for="searchInput" class="label mb-2 block">Search Course</label>
+                        <input type="text" id="searchInput" class="input" placeholder="Search by title, instructor, or topic...">
+                    </div>
+                    <div>
+                        <label for="categoryFilter" class="label mb-2 block">Category</label>
+                        <select id="categoryFilter" class="input w-full">
+                            <option value="">All Categories</option>
+                            <option value="COMPUTER_SCIENCE">Computer Science</option>
+                            <option value="BUSINESS">Business</option>
+                            <option value="DATA_SCIENCE">Data Science</option>
+                            <option value="DESIGN">Design</option>
+                            <option value="MARKETING">Marketing</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div class="min-w-48">
-                    <select id="categoryFilter" class="input w-full">
-                        <option value="">All Categories</option>
-                        <option value="COMPUTER_SCIENCE">Computer Science</option>
-                        <option value="BUSINESS">Business</option>
-                        <option value="DATA_SCIENCE">Data Science</option>
-                        <option value="DESIGN">Design</option>
-                        <option value="MARKETING">Marketing</option>
-                    </select>
-                </div>
-                
-                <div>
-                    <button id="searchBtn" class="btn btn-primary">
-                        🔍 Search
-                    </button>
-                </div>
+            </section>
+
+            <div id="loadingSpinner" class="text-center py-16">
+                <div class="spinner w-12 h-12 mx-auto mb-4"></div>
+                <p class="text-muted-foreground">Loading courses...</p>
             </div>
-        </section>
 
-        <!-- Results Summary -->
-        <section class="flex justify-between items-center mb-6">
-            <div id="resultsInfo" class="text-muted-foreground">
-                Loading courses...
+            <section id="courseGrid" class="grid-cols-1 md:grid-cols-2 gap-8 hidden">
+                </section>
+
+            <section id="noResults" class="text-center py-16 hidden">
+                <div class="text-6xl mb-4">🤷</div>
+                <h3 class="text-2xl font-semibold mb-2">No Courses Found</h3>
+                <p class="text-muted-foreground mb-6">Try adjusting your search filters to find what you're looking for.</p>
+                <button onclick="clearFilters()" class="btn btn-primary">Clear Filters</button>
+            </section>
+
+            <section id="pagination" class="flex justify-center mt-12"></section>
+        </main>
+        
+        <footer class="bg-muted/50 border-t py-8 mt-12">
+            <div class="container text-center text-muted-foreground">
+                <p>© 2025 Grocademy. All Rights Reserved.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <label class="label text-sm">Show:</label>
-                <select id="limitSelect" class="input w-auto min-w-20">
-                    <option value="6">6</option>
-                    <option value="12" selected>12</option>
-                    <option value="18">18</option>
-                    <option value="24">24</option>
-                </select>
-            </div>
-        </section>
-
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center py-8">
-            <div class="spinner w-10 h-10 mx-auto mb-4"></div>
-            <p class="text-muted-foreground">Loading courses...</p>
-        </div>
-
-        <!-- Course Grid -->
-        <section id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Courses will be dynamically loaded here -->
-        </section>
-
-        <!-- No Results -->
-        <section id="noResults" class="text-center py-8 hidden">
-            <div class="text-6xl mb-4">🔍</div>
-            <h3 class="text-xl font-semibold mb-2">No courses found</h3>
-            <p class="text-muted-foreground">Try adjusting your search criteria or browse all courses.</p>
-            <button onclick="clearFilters()" class="btn btn-primary mt-4">
-                Clear Filters
-            </button>
-        </section>
-
-        <!-- Pagination -->
-        <section id="pagination" class="flex justify-center mt-8">
-            <!-- Pagination will be dynamically generated -->
-        </section>
-    </main>
+        </footer>
     </div>
 
     <!-- Toast Container -->
@@ -200,49 +167,40 @@
         // Create course card element
         function createCourseCard(course) {
             const card = document.createElement('div');
-            card.className = 'course-card card cursor-pointer';
+            card.className = 'card overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1';
             
-            // Format price
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
-            
-            // Truncate description
-            const description = course.description.length > 120 
-                ? course.description.substring(0, 120) + '...' 
-                : course.description;
-
-            // Status badge
-            const statusBadge = course.isPurchased || course.is_purchased
-                ? '<span class="badge bg-green-100 text-green-800">Purchased</span>'
-                : `<span class="badge badge-default">${price}</span>`;
+            const isPurchased = course.isPurchased || course.is_purchased;
 
             card.innerHTML = `
-                <div class="course-image bg-gradient-minion h-48 flex items-center justify-center text-4xl rounded-t-lg">
-                    ${course.thumbnail_image ? 
-                        `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-t-lg">` : 
-                        '🎓'}
+                <div class="relative overflow-hidden">
+                    <div class="h-56 bg-gradient-minion flex items-center justify-center">
+                        ${course.thumbnail_image ? 
+                            `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">` : 
+                            '<span class="text-6xl">🎓</span>'}
+                    </div>
+                    <div class="absolute top-4 right-4 badge ${isPurchased ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'} font-bold text-sm">
+                        ${isPurchased ? 'Enrolled' : price}
+                    </div>
                 </div>
-                <div class="card-content">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="card-title text-lg font-semibold">${course.title}</h3>
-                        ${statusBadge}
+
+                <div class="p-6 flex flex-col flex-grow">
+                    <div class="flex-grow">
+                        <div class="badge badge-outline mb-3">${course.category || 'General'}</div>
+                        <h3 class="text-xl font-bold mb-2 leading-snug">${course.title}</h3>
+                        <p class="text-sm text-muted-foreground">By ${course.instructor}</p>
                     </div>
-                    <p class="text-sm text-muted-foreground mb-3">${description}</p>
-                    <div class="flex justify-between items-center text-sm text-muted-foreground mb-3">
-                        <span>👨‍🏫 ${course.instructor}</span>
+                    
+                    <div class="mt-6">
+                        <button class="btn btn-primary w-full btn-md">
+                            View Details
+                        </button>
                     </div>
-                    ${course.topics && course.topics.length > 0 ? 
-                        `<div class="flex flex-wrap gap-1 mb-3">
-                            ${course.topics.slice(0, 3).map(topic => 
-                                `<span class="badge badge-outline text-xs">${topic}</span>`
-                            ).join('')}
-                            ${course.topics.length > 3 ? '<span class="text-xs text-muted-foreground">+' + (course.topics.length - 3) + ' more</span>' : ''}
-                        </div>` : ''}
-                    <button onclick="viewCourse(${course.id})" class="btn btn-primary w-full btn-sm">
-                        View Details
-                    </button>
                 </div>
             `;
 
+            card.onclick = () => viewCourse(course.id);
+            
             return card;
         }
 

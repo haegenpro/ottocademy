@@ -7,16 +7,15 @@
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="nav border-b">
+<body class="bg-background">
+    <nav class="nav">
         <div class="container">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="index.html" class="text-2xl font-bold text-primary">🍌 Grocademy</a>
-                </div>
-                
-                <ul class="flex items-center space-x-4">
+            <div class="flex items-center justify-between h-20">
+                <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                    <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
+                    <span>Grocademy</span>
+                </a>
+                <ul class="flex items-center space-x-6">
                     <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
                     <li><a href="my-courses.html" class="nav-link active">My Courses</a></li>
                     <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
@@ -26,87 +25,49 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="container py-8">
-        <!-- Header -->
-        <section class="mb-8">
-            <h1 class="text-4xl font-bold mb-4">My Courses</h1>
-            <p class="text-lg text-muted-foreground">
-                Continue your learning journey with your purchased courses
-            </p>
+    <main class="flex-1 container py-12">
+        <section class="mb-12">
+            <h1 class="text-5xl font-extrabold mb-4">My Learning</h1>
+            <p class="text-lg text-muted-foreground">Continue your journey and complete your courses.</p>
         </section>
 
-        <!-- Stats Cards -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="card">
-                <div class="card-content text-center">
-                    <div class="text-3xl font-bold text-primary mb-2" id="totalCourses">0</div>
-                    <div class="text-sm text-muted-foreground">Total Courses</div>
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div class="card p-6 flex items-center gap-4">
+                <div class="text-3xl">📚</div>
+                <div>
+                    <div class="text-3xl font-bold" id="totalCourses">0</div>
+                    <div class="text-muted-foreground">Courses Enrolled</div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-content text-center">
-                    <div class="text-3xl font-bold text-green-600 mb-2" id="completedCourses">0</div>
-                    <div class="text-sm text-muted-foreground">Completed</div>
+            <div class="card p-6 flex items-center gap-4">
+                <div class="text-3xl">🎉</div>
+                <div>
+                    <div class="text-3xl font-bold text-green-600" id="completedCourses">0</div>
+                    <div class="text-muted-foreground">Completed</div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-content text-center">
-                    <div class="text-3xl font-bold text-blue-600 mb-2" id="inProgressCourses">0</div>
-                    <div class="text-sm text-muted-foreground">In Progress</div>
+            <div class="card p-6 flex items-center gap-4">
+                <div class="text-3xl">🏃</div>
+                <div>
+                    <div class="text-3xl font-bold text-blue-600" id="inProgressCourses">0</div>
+                    <div class="text-muted-foreground">In Progress</div>
                 </div>
             </div>
         </section>
-
-        <!-- Filters -->
-        <section class="mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        class="input w-full" 
-                        placeholder="Search your courses..."
-                    >
-                </div>
-                
-                <div class="min-w-48">
-                    <select id="statusFilter" class="input w-full">
-                        <option value="">All Courses</option>
-                        <option value="completed">Completed</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="not-started">Not Started</option>
-                    </select>
-                </div>
-            </div>
+        
+        <div id="loadingSpinner" class="text-center py-16">...</div>
+        <section id="coursesGrid" class="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden"></section>
+        <section id="emptyState" class="text-center py-16 hidden">
+            <div class="text-6xl mb-4">🎒</div>
+            <h3 class="text-2xl font-semibold mb-2">Your backpack is empty!</h3>
+            <p class="text-muted-foreground mb-6">You haven't enrolled in any courses yet. Let's find something new to learn.</p>
+            <a href="courses.html" class="btn btn-primary btn-lg">Browse Courses</a>
         </section>
-
-        <!-- Loading Spinner -->
-        <div id="loadingSpinner" class="text-center py-8">
-            <div class="spinner w-10 h-10 mx-auto mb-4"></div>
-            <p class="text-muted-foreground">Loading your courses...</p>
-        </div>
-
-        <!-- Courses Grid -->
-        <section id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Courses will be dynamically loaded here -->
-        </section>
-
-        <!-- Empty State -->
-        <section id="emptyState" class="text-center py-12 hidden">
-            <div class="text-6xl mb-4">📚</div>
-            <h3 class="text-xl font-semibold mb-2">No courses found</h3>
-            <p class="text-muted-foreground mb-6">You haven't purchased any courses yet. Start learning today!</p>
-            <a href="courses.html" class="btn btn-primary">
-                Browse Courses
-            </a>
-        </section>
-
-        <!-- Pagination -->
-        <section id="pagination" class="flex justify-center mt-8">
-            <!-- Pagination will be dynamically generated -->
-        </section>
+        <section id="pagination" class="flex justify-center mt-12"></section>
     </main>
+    
+    <div id="toast-container"></div>
+    <script src="js/api.js"></script>
 
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
@@ -249,59 +210,36 @@
         // Create course card element
         function createCourseCard(course) {
             const card = document.createElement('div');
-            card.className = 'course-card card cursor-pointer';
+            card.className = 'card course-card overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2';
             
             const progress = getCourseProgress(course);
-            const statusBadge = getStatusBadge(progress);
+            const buttonText = progress === 0 ? 'Start Learning' : progress === 100 ? 'Review Course' : 'Continue Learning';
             
-            // Truncate description
-            const description = course.description.length > 120 
-                ? course.description.substring(0, 120) + '...' 
-                : course.description;
-
             card.innerHTML = `
-                <div class="course-image bg-gradient-minion h-48 flex items-center justify-center text-4xl rounded-t-lg relative">
-                    ${course.thumbnail_image ? 
-                        `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-t-lg">` : 
-                        '🎓'}
-                    ${statusBadge}
+                <div class="h-48 bg-gradient-minion flex items-center justify-center">
+                     ${course.thumbnail_image ? 
+                        `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover">` : 
+                        '<span class="text-5xl">🎓</span>'}
                 </div>
-                <div class="card-content">
-                    <div class="mb-3">
-                        <h3 class="card-title text-lg font-semibold mb-1">${course.title}</h3>
-                        <p class="text-sm text-muted-foreground">👨‍🏫 ${course.instructor}</p>
-                    </div>
+                <div class="p-6">
+                    <h3 class="text-lg font-bold mb-2 h-14">${course.title}</h3>
+                    <p class="text-sm text-muted-foreground mb-4">By ${course.instructor}</p>
                     
-                    <p class="text-sm text-muted-foreground mb-4">${description}</p>
-                    
-                    <!-- Progress Bar -->
-                    <div class="mb-4">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-medium">Progress</span>
-                            <span class="text-xs text-muted-foreground">${progress}%</span>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between text-xs text-muted-foreground">
+                            <span>Progress</span>
+                            <span class="font-semibold">${progress}%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-primary h-2 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        <div class="w-full bg-muted rounded-full h-2.5">
+                            <div class="bg-primary h-2.5 rounded-full" style="width: ${progress}%"></div>
                         </div>
                     </div>
 
-                    <div class="flex gap-2">
-                        <button onclick="continueCourse(${course.id})" class="btn btn-primary flex-1 btn-sm">
-                            ${progress === 0 ? 'Start' : progress === 100 ? 'Review' : 'Continue'}
-                        </button>
-                        <button onclick="viewCourseDetails(${course.id})" class="btn btn-outline btn-sm">
-                            Details
-                        </button>
-                    </div>
-
-                    ${progress === 100 ? `
-                        <button onclick="downloadCertificate(${course.id})" class="btn btn-secondary w-full btn-sm mt-2">
-                            📜 Download Certificate
-                        </button>
-                    ` : ''}
+                    <button onclick="continueCourse(${course.id})" class="btn btn-primary w-full">
+                        ${buttonText}
+                    </button>
                 </div>
             `;
-
             return card;
         }
 
