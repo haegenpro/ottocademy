@@ -53,7 +53,7 @@ class ApiService {
     async login(email, password) {
         const response = await this.request('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ identifier: email, password })
         });
         
         if (response.access_token) {
@@ -63,15 +63,21 @@ class ApiService {
         return response;
     }
 
-    async register(name, email, password) {
+    async register(userData) {
         return await this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password })
+            body: JSON.stringify({
+                username: userData.username,
+                email: userData.email,
+                password: userData.password,
+                firstName: userData.firstName,
+                lastName: userData.lastName
+            })
         });
     }
 
     async getProfile() {
-        return await this.request('/auth/profile');
+        return await this.request('/auth/self');
     }
 
     // Courses
@@ -92,9 +98,8 @@ class ApiService {
     }
 
     async purchaseCourse(courseId) {
-        return await this.request('/purchases', {
-            method: 'POST',
-            body: JSON.stringify({ courseId })
+        return await this.request(`/courses/${courseId}/buy`, {
+            method: 'POST'
         });
     }
 
@@ -104,21 +109,23 @@ class ApiService {
             limit: limit.toString()
         });
         
-        return await this.request(`/purchases/my-courses?${params}`);
+        return await this.request(`/courses/my-courses?${params}`);
     }
 
     // Modules
     async getCourseModules(courseId) {
-        return await this.request(`/courses/${courseId}/modules`);
+        const course = await this.getCourse(courseId);
+        return course.modules || [];
     }
 
     async getModule(courseId, moduleId) {
-        return await this.request(`/courses/${courseId}/modules/${moduleId}`);
+        const modules = await this.getCourseModules(courseId);
+        return modules.find(module => module.id === moduleId);
     }
 
     async completeModule(courseId, moduleId) {
-        return await this.request(`/courses/${courseId}/modules/${moduleId}/complete`, {
-            method: 'POST'
+        return await this.request(`/modules/${moduleId}/complete`, {
+            method: 'PATCH'
         });
     }
 

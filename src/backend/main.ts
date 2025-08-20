@@ -19,7 +19,7 @@ async function bootstrap() {
     // Set global API prefix for API routes only
     app.setGlobalPrefix('api', {
       exclude: [
-        '', // Root route
+        '',
         'auth.html',
         'courses.html', 
         'course-detail.html',
@@ -57,15 +57,12 @@ async function bootstrap() {
   }
 }
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // Log the error but try to keep the process running
 });
 
 bootstrap();

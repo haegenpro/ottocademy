@@ -117,8 +117,8 @@ docker-compose up --build
 ```
 
 **Your application will be running at:**
-- **Frontend**: http://localhost:3000
-- **API Endpoints**: http://localhost:3000/api
+- **Frontend**: http://127.0.0.1:3000
+- **API Endpoints**: http://127.0.0.1:3000/api
 
 ### � Option B: Local Development
 
@@ -622,31 +622,34 @@ grocademy-api/
 ## 🔗 API Endpoints
 
 ### Authentication
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `GET /auth/profile` - Get user profile (requires JWT)
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login (accepts identifier: email or username)
+- `GET /api/auth/self` - Get current user profile (requires JWT)
 
 ### Users (Admin only)
-- `GET /users` - List all users
-- `GET /users/:id` - Get user by ID
-- `PUT /users/:id` - Update user
-- `DELETE /users/:id` - Delete user
-- `POST /users/:id/balance` - Add balance to user
+- `GET /api/users` - List all users with search and pagination
+- `GET /api/users/:id` - Get user by ID
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
+- `POST /api/users/:id/balance` - Add balance to user
 
 ### Courses
-- `GET /courses` - List all courses
-- `GET /courses/:id` - Get course by ID
-- `POST /courses` - Create course (admin only)
-- `PUT /courses/:id` - Update course (admin only)
-- `DELETE /courses/:id` - Delete course (admin only)
-- `POST /courses/:id/buy` - Purchase course
-- `POST /courses/:courseId/modules` - Add module to course (admin only)
+- `GET /api/courses` - List all courses with search and pagination
+- `GET /api/courses/:id` - Get course by ID
+- `POST /api/courses` - Create course (admin only)
+- `PUT /api/courses/:id` - Update course (admin only)
+- `DELETE /api/courses/:id` - Delete course (admin only)
+- `POST /api/courses/:id/buy` - Purchase course
+- `GET /api/courses/my-courses` - Get user's purchased courses
+- `GET /api/courses/:courseId/modules` - Get modules for a course
+- `POST /api/courses/:courseId/modules` - Add module to course (admin only)
 
 ### Modules
-- `PUT /modules/:id` - Update module (admin only)
-- `DELETE /modules/:id` - Delete module (admin only)
-- `PATCH /modules/:id/complete` - Mark module as complete
-- `PATCH /modules/reorder` - Reorder modules (admin only)
+- `GET /api/modules/:id` - Get individual module (requires course purchase)
+- `PUT /api/modules/:id` - Update module (admin only)
+- `DELETE /api/modules/:id` - Delete module (admin only)
+- `PATCH /api/modules/:id/complete` - Mark module as complete
+- `PATCH /api/modules/reorder` - Reorder modules (admin only)
 
 ## 🧪 Testing the Application
 

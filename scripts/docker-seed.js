@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🔍 Checking if database is already seeded...');
 
-  // Check if admin user already exists
   const existingAdmin = await prisma.user.findUnique({
     where: { email: 'admin@grocademy.com' }
   });
@@ -20,7 +19,6 @@ async function main() {
 
   console.log('🌱 Database not seeded. Starting seeding process...');
 
-  // Clear existing data
   console.log('Clearing existing data...');
   await prisma.certificate.deleteMany();
   await prisma.moduleCompletion.deleteMany();
@@ -285,7 +283,6 @@ async function main() {
     ],
   });
 
-  // Add basic modules for other courses
   for (const course of courses.slice(1)) {
     await prisma.module.createMany({
       data: Array.from({ length: 3 }, (_, i) => ({

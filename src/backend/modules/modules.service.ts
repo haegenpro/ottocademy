@@ -27,6 +27,44 @@ export class ModulesService {
     });
   }
 
+  async findOne(moduleId: string, userId: string) {
+    const module = await this.prisma.module.findUnique({
+      where: { id: moduleId },
+      include: {
+        course: {
+          include: {
+            purchasedBy: {
+              where: { userId },
+            },
+          },
+        },
+        completions: {
+          where: { userId },
+          select: { isCompleted: true },
+        },
+      },
+    });
+
+    if (!module) {
+      throw new NotFoundException(`Module with ID "${moduleId}" not found.`);
+    }
+
+    if (module.course.purchasedBy.length === 0) {
+      throw new ForbiddenException('You have not purchased this course.');
+    }
+
+    return {
+      status: 'success',
+      message: 'Module retrieved successfully',
+      data: {
+        ...module,
+        is_completed: module.completions.length > 0 && module.completions[0].isCompleted,
+        course: undefined,
+        completions: undefined,
+      },
+    };
+  }
+
   async reorder(reorderModulesDto: ReorderModulesDto) {
     const { module_order } = reorderModulesDto;
 
@@ -43,15 +81,22 @@ export class ModulesService {
   async complete(moduleId: string, userId: string) {
     const module = await this.prisma.module.findUnique({
       where: { id: moduleId },
-      include: { course: { include: { purchasedBy: true } } },
+      include: { 
+        course: { 
+          include: { 
+            purchasedBy: {
+              where: { userId },
+            }
+          } 
+        } 
+      },
     });
 
     if (!module) {
       throw new NotFoundException(`Module with ID "${moduleId}" not found.`);
     }
 
-    const isPurchased = module.course.purchasedBy.some(p => p.userId === userId);
-    if (!isPurchased) {
+    if (module.course.purchasedBy.length === 0) {
       throw new ForbiddenException('You have not purchased this course.');
     }
 
@@ -81,22 +126,19 @@ export class ModulesService {
     }
 
     return {
+      status: 'success',
       message: 'Module marked as complete.',
-      course_progress: {
-        total_modules: totalModules,
-        completed_modules: completedModules,
-        percentage: (completedModules / totalModules) * 100,
+      data: {
+        module_id: moduleId,
+        is_completed: true,
+        course_progress: {
+          total_modules: totalModules,
+          completed_modules: completedModules,
+          percentage: Math.round((completedModules / totalModules) * 100),
+        },
+        certificate_url: certificate ? `/certificates/${certificate.id}` : null,
       },
-      certificate_generated: certificate,
     };
-  }
-
-  async findOne(id: string) {
-    const module = await this.prisma.module.findUnique({ where: { id } });
-    if (!module) {
-      throw new NotFoundException(`Module with ID "${id}" not found.`);
-    }
-    return module;
   }
 
   async update(
@@ -104,7 +146,10 @@ export class ModulesService {
     updateModuleDto: UpdateModuleDto,
     files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
   ) {
-    await this.findOne(id);
+    const module = await this.prisma.module.findUnique({ where: { id } });
+    if (!module) {
+      throw new NotFoundException(`Module with ID "${id}" not found.`);
+    }
 
     const pdfPath = files.pdf_content?.[0]?.path;
     const videoPath = files.video_content?.[0]?.path;
@@ -120,7 +165,11 @@ export class ModulesService {
   }
 
   async remove(id: string) {
-    const module = await this.findOne(id);
+    const module = await this.prisma.module.findUnique({ where: { id } });
+    
+    if (!module) {
+      throw new NotFoundException(`Module with ID "${id}" not found.`);
+    }
     
     if (module.pdf_content) {
       try { await fs.unlink(module.pdf_content); } catch (e) { console.error(e); }

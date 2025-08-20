@@ -25,24 +25,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const responseBody = exception.getResponse();
       message = typeof responseBody === 'string' ? responseBody : responseBody;
     } else {
-      // Handle unexpected errors
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';
       
-      // Log the full error for debugging
       this.logger.error(
         `Unexpected error: ${exception}`,
         exception instanceof Error ? exception.stack : 'No stack trace',
       );
     }
 
-    // Log the error
     this.logger.error(
       `HTTP ${status} Error: ${request.method} ${request.url}`,
       JSON.stringify(message),
     );
 
-    // Send response
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),

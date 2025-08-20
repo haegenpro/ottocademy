@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Patch,
   Body,
   UseGuards,
@@ -25,6 +26,13 @@ export class ModulesController {
   @Patch('reorder')
   reorder(@Body() reorderModulesDto: ReorderModulesDto) {
     return this.modulesService.reorder(reorderModulesDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string, @Request() req) {
+    const userId = req.user.id;
+    return this.modulesService.findOne(id, userId);
   }
 
   @UseGuards(JwtAuthGuard)

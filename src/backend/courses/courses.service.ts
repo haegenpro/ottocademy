@@ -20,14 +20,50 @@ export class CoursesService {
     });
   }
 
-  async findAll() {
-    return this.prisma.course.findMany({
-      include: {
-        modules: {
-          orderBy: { order: 'asc' },
+  async findAll(search?: string, page: number = 1, limit: number = 15) {
+    const skip = (page - 1) * limit;
+    
+    const where = search
+      ? {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' as const } },
+            { instructor: { contains: search, mode: 'insensitive' as const } },
+            { topics: { has: search } },
+          ],
+        }
+      : {};
+
+    const [courses, total] = await Promise.all([
+      this.prisma.course.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          modules: {
+            select: { id: true },
+          },
         },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.course.count({ where }),
+    ]);
+
+    const coursesWithModuleCount = courses.map(course => ({
+      ...course,
+      total_modules: course.modules.length,
+      modules: undefined,
+    }));
+
+    return {
+      status: 'success',
+      message: 'Courses retrieved successfully',
+      data: coursesWithModuleCount,
+      pagination: {
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
+        total_items: total,
       },
-    });
+    };
   }
 
   async findOne(id: string) {
@@ -63,9 +99,7 @@ export class CoursesService {
   async remove(id: string) {
     const course = await this.findOne(id);
 
-    // Delete in correct order due to foreign key constraints
     await this.prisma.$transaction(async (tx) => {
-      // Delete module completions first
       await tx.moduleCompletion.deleteMany({
         where: {
           module: {
@@ -74,31 +108,25 @@ export class CoursesService {
         },
       });
 
-      // Delete modules
       await tx.module.deleteMany({
         where: { courseId: id },
       });
 
-      // Delete certificates
       await tx.certificate.deleteMany({
         where: { courseId: id },
       });
 
-      // Delete user course purchases
       await tx.userCourse.deleteMany({
         where: { courseId: id },
       });
 
-      // Finally delete the course
       await tx.course.delete({ where: { id } });
     });
 
-    // Try to delete thumbnail file (don't fail if it doesn't exist)
     if (course.thumbnail_image) {
       try {
         await fs.unlink(course.thumbnail_image);
       } catch (error) {
-        // File doesn't exist, that's okay
         console.log(`Thumbnail file not found for course ${id}, skipping deletion`);
       }
     }
@@ -147,5 +175,138 @@ export class CoursesService {
         user_balance: updatedUser.balance,
       };
     });
+  }
+
+  async getMyCourses(userId: string, search?: string, page: number = 1, limit: number = 15) {
+    const skip = (page - 1) * limit;
+    
+    const where = {
+      userId,
+      ...(search && {
+        course: {
+          OR: [
+            { title: { contains: search, mode: 'insensitive' as const } },
+            { instructor: { contains: search, mode: 'insensitive' as const } },
+            { topics: { has: search } },
+          ],
+        },
+      }),
+    };
+
+    const [userCourses, total] = await Promise.all([
+      this.prisma.userCourse.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          course: {
+            include: {
+              modules: {
+                select: { id: true },
+              },
+            },
+          },
+        },
+        orderBy: { purchasedAt: 'desc' },
+      }),
+      this.prisma.userCourse.count({ where }),
+    ]);
+
+    const courseIds = userCourses.map(uc => uc.courseId);
+    const completions = await this.prisma.moduleCompletion.groupBy({
+      by: ['moduleId'],
+      where: {
+        userId,
+        isCompleted: true,
+        module: {
+          courseId: { in: courseIds },
+        },
+      },
+      _count: { moduleId: true },
+    });
+
+    const completionMap = new Map();
+    for (const completion of completions) {
+      const module = await this.prisma.module.findUnique({
+        where: { id: completion.moduleId },
+        select: { courseId: true },
+      });
+      if (module) {
+        const count = completionMap.get(module.courseId) || 0;
+        completionMap.set(module.courseId, count + 1);
+      }
+    }
+
+    const coursesWithProgress = userCourses.map(userCourse => {
+      const totalModules = userCourse.course.modules.length;
+      const completedModules = completionMap.get(userCourse.courseId) || 0;
+      const progressPercentage = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+
+      return {
+        id: userCourse.course.id,
+        title: userCourse.course.title,
+        instructor: userCourse.course.instructor,
+        topics: userCourse.course.topics,
+        thumbnail_image: userCourse.course.thumbnail_image,
+        progress_percentage: Math.round(progressPercentage),
+        purchased_at: userCourse.purchasedAt,
+      };
+    });
+
+    return {
+      status: 'success',
+      message: 'My courses retrieved successfully',
+      data: coursesWithProgress,
+      pagination: {
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
+        total_items: total,
+      },
+    };
+  }
+
+  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15) {
+    const userCourse = await this.prisma.userCourse.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+
+    if (!userCourse) {
+      throw new ForbiddenException('You have not purchased this course.');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [modules, total] = await Promise.all([
+      this.prisma.module.findMany({
+        where: { courseId },
+        skip,
+        take: limit,
+        include: {
+          completions: {
+            where: { userId },
+            select: { isCompleted: true },
+          },
+        },
+        orderBy: { order: 'asc' },
+      }),
+      this.prisma.module.count({ where: { courseId } }),
+    ]);
+
+    const modulesWithCompletion = modules.map(module => ({
+      ...module,
+      is_completed: module.completions.length > 0 && module.completions[0].isCompleted,
+      completions: undefined,
+    }));
+
+    return {
+      status: 'success',
+      message: 'Course modules retrieved successfully',
+      data: modulesWithCompletion,
+      pagination: {
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
+        total_items: total,
+      },
+    };
   }
 }
