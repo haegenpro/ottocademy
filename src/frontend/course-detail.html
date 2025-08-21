@@ -272,7 +272,9 @@
                 `;
             } else {
                 container.innerHTML = `
-                    <button onclick="openPurchaseModal()" class="btn btn-primary w-full">
+                    <button onclick="openPurchaseModal()" 
+                            class="btn btn-primary w-full transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95"
+                            id="purchaseBtn">
                         🛒 Purchase Course
                     </button>
                 `;
@@ -313,7 +315,13 @@
 
         // Open purchase modal
         function openPurchaseModal() {
-            if (!currentCourse) return;
+            console.log('openPurchaseModal called, currentCourse:', currentCourse, 'isPurchased:', isPurchased);
+            
+            if (!currentCourse) {
+                console.error('No current course found');
+                showToast('Course information not available', 'error');
+                return;
+            }
             
             // Check if user already purchased this course
             if (isPurchased) {

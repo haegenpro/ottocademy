@@ -319,7 +319,9 @@
                         </div>
                     </div>
 
-                    <button onclick="continueCourse(${course.id})" class="btn btn-primary w-full btn-md">
+                    <button onclick="continueCourse('${course.id}')" 
+                            class="btn btn-primary w-full btn-md transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95"
+                            data-course-id="${course.id}">
                         ${buttonText}
                     </button>
                 </div>
@@ -437,7 +439,24 @@
 
         // Continue course (go to modules)
         function continueCourse(courseId) {
-            window.location.href = `module.html?courseId=${courseId}`;
+            console.log('continueCourse called with courseId:', courseId);
+            
+            if (!courseId) {
+                console.error('No courseId provided');
+                showToast('Course ID not found', 'error');
+                return;
+            }
+            
+            // Add visual feedback
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Loading...';
+            button.disabled = true;
+            
+            // Small delay to show loading state
+            setTimeout(() => {
+                window.location.href = `module.html?courseId=${courseId}`;
+            }, 500);
         }
 
         // View course details
@@ -478,6 +497,48 @@
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(performSearch, 500);
             });
+        }
+
+        // Simple toast notification function
+        function showToast(message, type = 'info') {
+            console.log(`Toast [${type}]: ${message}`);
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white max-w-sm transform transition-all duration-300 translate-x-full`;
+            
+            // Set color based on type
+            switch(type) {
+                case 'error':
+                    toast.className += ' bg-red-500';
+                    break;
+                case 'warning':
+                    toast.className += ' bg-yellow-500';
+                    break;
+                case 'success':
+                    toast.className += ' bg-green-500';
+                    break;
+                default:
+                    toast.className += ' bg-blue-500';
+            }
+            
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
     </script>
 </body>
