@@ -3,16 +3,48 @@ const API_BASE_URL = 'http://127.0.0.1:3000/api';
 class ApiService {
     constructor() {
         this.token = localStorage.getItem('token');
+        this.tokenExpiry = localStorage.getItem('tokenExpiry');
+        
+        // Check token expiration on initialization
+        this.checkTokenExpiration();
+        
+        // Set up periodic token expiration checks (every 30 seconds)
+        setInterval(() => this.checkTokenExpiration(), 30000);
     }
 
     setToken(token) {
         this.token = token;
         localStorage.setItem('token', token);
+        
+        // Set token expiry to 24 hours from now (standard JWT expiration)
+        const expiry = Date.now() + (60 * 60 * 1000);
+        this.tokenExpiry = expiry;
+        localStorage.setItem('tokenExpiry', expiry.toString());
     }
 
     clearToken() {
         this.token = null;
+        this.tokenExpiry = null;
         localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiry');
+    }
+
+    checkTokenExpiration() {
+        if (this.tokenExpiry && Date.now() > parseInt(this.tokenExpiry)) {
+            console.warn('Token has expired');
+            this.clearToken();
+            
+            // Only redirect if we're not already on auth or index page
+            if (!window.location.pathname.includes('auth.html') && 
+                !window.location.pathname.includes('index.html')) {
+                showToast('Your session has expired. Please log in again.', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+            }
+            return false;
+        }
+        return true;
     }
 
     getHeaders() {
@@ -38,6 +70,23 @@ class ApiService {
             const response = await fetch(url, config);
             
             if (!response.ok) {
+                // Handle authentication errors
+                if (response.status === 401) {
+                    console.warn('Authentication failed - token may be expired');
+                    this.clearToken();
+                    
+                    // Only redirect if we're not already on the auth page
+                    if (!window.location.pathname.includes('auth.html') && 
+                        !window.location.pathname.includes('index.html')) {
+                        showToast('Your session has expired. Please log in again.', 'warning');
+                        setTimeout(() => {
+                            window.location.href = '/auth.html';
+                        }, 1500);
+                    }
+                    
+                    throw new Error('Authentication required');
+                }
+                
                 const error = await response.json().catch(() => ({ message: 'Network error' }));
                 throw new Error(error.message || `HTTP ${response.status}`);
             }
@@ -206,7 +255,21 @@ function debounce(func, wait) {
 }
 
 function isAuthenticated() {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    const tokenExpiry = localStorage.getItem('tokenExpiry');
+    
+    if (!token || !tokenExpiry) {
+        return false;
+    }
+    
+    // Check if token has expired
+    if (Date.now() > parseInt(tokenExpiry)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('tokenExpiry');
+        return false;
+    }
+    
+    return true;
 }
 
 function requireAuth() {

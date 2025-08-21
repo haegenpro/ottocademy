@@ -18,7 +18,12 @@
                 <ul class="flex items-center space-x-6">
                     <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
                     <li><a href="my-courses.html" class="nav-link active">My Courses</a></li>
-                    <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
+                    <li>
+                        <div class="text-sm">
+                            <span id="userGreeting" class="text-muted-foreground">Hello! 👋</span>
+                            <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
+                        </div>
+                    </li>
                     <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
                 </ul>
             </div>
@@ -96,11 +101,30 @@
         // Load user information
         async function loadUserInfo() {
             try {
+                if (!isAuthenticated()) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                
                 const profile = await api.getProfile();
-                document.getElementById('userGreeting').textContent = `Hello, ${profile.name}! 👋`;
+                const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
+                document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
+                
+                // Display user balance
+                const balance = profile.balance || 0;
+                document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
+                
+                if (error.message === 'Authentication required') {
+                    // Authentication failed - user will be redirected by API service
+                    return;
+                }
+                
+                // For other errors, show a generic greeting
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
+                document.getElementById('userBalance').textContent = 'Balance: --';
+                showToast('Unable to load user profile', 'warning');
             }
         }
 
@@ -146,6 +170,12 @@
 
             } catch (error) {
                 console.error('Failed to load courses:', error);
+                
+                if (error.message === 'Authentication required') {
+                    // Authentication failed - user will be redirected by API service
+                    return;
+                }
+                
                 showToast('Failed to load your courses. Please try again.', 'error');
                 emptyState.classList.remove('hidden');
             } finally {

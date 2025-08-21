@@ -101,7 +101,7 @@ async function main() {
       price: 89999,
       topics: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'MongoDB', 'Express', 'Full-Stack'],
       category: 'COMPUTER_SCIENCE',
-      thumbnail_image: 'uploads/web-dev-bootcamp.jpg',
+      thumbnail_image: 'uploads/web-dev-bootcamp.png',
     },
   });
 

@@ -19,7 +19,12 @@
                     <ul class="flex items-center space-x-6">
                         <li><a href="courses.html" class="nav-link active">Browse Courses</a></li>
                         <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
-                        <li><span id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</span></li>
+                        <li>
+                            <div class="text-sm">
+                                <span id="userGreeting" class="text-muted-foreground">Hello! 👋</span>
+                                <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
+                            </div>
+                        </li>
                         <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
                     </ul>
                 </div>
@@ -66,7 +71,7 @@
                 <div class="text-6xl mb-4">🤷</div>
                 <h3 class="text-2xl font-semibold mb-2">No Courses Found</h3>
                 <p class="text-muted-foreground mb-6">Try adjusting your search filters to find what you're looking for.</p>
-                <button onclick="clearFilters()" class="btn btn-primary">Clear Filters</button>
+                <button onclick="clearFilters()" class="btn btn-primary btn-lg">Clear Filters</button>
             </section>
 
             <section id="pagination" class="flex justify-center mt-12"></section>
@@ -105,12 +110,30 @@
         // Load user information
         async function loadUserInfo() {
             try {
+                if (!isAuthenticated()) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                
                 const profile = await api.getProfile();
                 const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
                 document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
+                
+                // Display user balance
+                const balance = profile.balance || 0;
+                document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
+                
+                if (error.message === 'Authentication required') {
+                    // Authentication failed - user will be redirected by API service
+                    return;
+                }
+                
+                // For other errors, show a generic greeting
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
+                document.getElementById('userBalance').textContent = 'Balance: --';
+                showToast('Unable to load user profile', 'warning');
             }
         }
 
@@ -127,6 +150,11 @@
             pagination.classList.add('hidden');
 
             try {
+                if (!isAuthenticated()) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                
                 const response = await api.getCourses(currentPage, currentLimit, currentSearch, currentCategory);
                 const courses = response.data || response.courses || response;
                 const meta = response.meta || response.pagination || {};
@@ -147,6 +175,12 @@
 
             } catch (error) {
                 console.error('Failed to load courses:', error);
+                
+                if (error.message === 'Authentication required') {
+                    // Authentication failed - user will be redirected by API service
+                    return;
+                }
+                
                 showToast('Failed to load courses. Please try again.', 'error');
                 noResults.classList.remove('hidden');
             } finally {
@@ -183,12 +217,26 @@
                 return `https://picsum.photos/400/300?random=${imageId}`;
             };
 
+            // Create image element with better error handling
+            const createImageElement = (course) => {
+                if (course.thumbnail_image) {
+                    return `<img src="${course.thumbnail_image}" 
+                                 alt="${course.title}" 
+                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                 onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');"
+                                 loading="lazy">`;
+                } else {
+                    return `<img src="${getPlaceholderImage(course.title)}" 
+                                 alt="${course.title}" 
+                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                 loading="lazy">`;
+                }
+            };
+
             card.innerHTML = `
                 <div class="relative overflow-hidden">
                     <div class="h-56 bg-gradient-minion flex items-center justify-center">
-                        ${course.thumbnail_image ? 
-                            `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}';">` : 
-                            `<img src="${getPlaceholderImage(course.title)}" alt="${course.title}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">`}
+                        ${createImageElement(course)}
                     </div>
                     <div class="absolute top-4 right-4 badge ${isPurchased ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'} font-bold text-sm">
                         ${isPurchased ? 'Enrolled' : price}
