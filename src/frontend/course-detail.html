@@ -96,7 +96,7 @@
     </main>
 
     <!-- Purchase Confirmation Modal -->
-    <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 class="text-xl font-bold mb-4">Confirm Purchase</h3>
             <p class="text-muted-foreground mb-6">
@@ -197,8 +197,29 @@
             document.getElementById('courseInstructor').textContent = `👨‍🏫 By ${course.instructor}`;
             document.getElementById('courseDescription').textContent = course.description;
 
+            // Generate a consistent placeholder image based on course title
+            const getPlaceholderImage = (title) => {
+                const hash = title.split('').reduce((a, b) => {
+                    a = ((a << 5) - a) + b.charCodeAt(0);
+                    return a & a;
+                }, 0);
+                const imageId = Math.abs(hash) % 1000 + 1;
+                return `https://picsum.photos/800/400?random=${imageId}`;
+            };
+
+            // Set course image with proper error handling
+            const courseImageElement = document.getElementById('courseImage');
             if (course.thumbnail_image) {
-                document.getElementById('courseImage').innerHTML = `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover rounded-xl shadow-lg">`;
+                courseImageElement.innerHTML = `<img src="${course.thumbnail_image}" 
+                     alt="${course.title}" 
+                     class="w-full h-full object-cover rounded-xl shadow-lg" 
+                     onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');" 
+                     loading="lazy">`;
+            } else {
+                courseImageElement.innerHTML = `<img src="${getPlaceholderImage(course.title)}" 
+                     alt="${course.title}" 
+                     class="w-full h-full object-cover rounded-xl shadow-lg" 
+                     loading="lazy">`;
             }
 
             const topicsContainer = document.getElementById('courseTopics');
@@ -294,6 +315,12 @@
         function openPurchaseModal() {
             if (!currentCourse) return;
             
+            // Check if user already purchased this course
+            if (isPurchased) {
+                showToast('You have already purchased this course!', 'warning');
+                return;
+            }
+            
             const price = currentCourse.price === 0 ? 'Free' : formatCurrency(currentCourse.price);
             document.getElementById('modalPrice').textContent = price;
             document.getElementById('purchaseModal').classList.remove('hidden');
@@ -307,6 +334,13 @@
         // Confirm purchase
         async function confirmPurchase() {
             if (!currentCourse) return;
+
+            // Double-check if user already purchased this course
+            if (isPurchased) {
+                showToast('You have already purchased this course!', 'warning');
+                closePurchaseModal();
+                return;
+            }
 
             try {
                 await api.purchaseCourse(currentCourse.id);

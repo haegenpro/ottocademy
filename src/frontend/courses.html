@@ -40,7 +40,7 @@
             </section>
 
             <section class="mb-8 p-6 card">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div class="md:col-span-2">
                         <label for="searchInput" class="label mb-2 block">Search Course</label>
                         <input type="text" id="searchInput" class="input" placeholder="Search by title, instructor, or topic...">
@@ -56,6 +56,22 @@
                             <option value="MARKETING">Marketing</option>
                         </select>
                     </div>
+                    <div>
+                        <label for="limitSelect" class="label mb-2 block">Show</label>
+                        <select id="limitSelect" class="input w-full">
+                            <option value="10">10 per page</option>
+                            <option value="20">20 per page</option>
+                            <option value="50">50 per page</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button id="searchBtn" class="btn btn-primary btn-lg w-full">Search</button>
+                    </div>
+                </div>
+                
+                <!-- Results Info -->
+                <div id="resultsInfo" class="mt-4 text-sm text-muted-foreground hidden">
+                    Showing results...
                 </div>
             </section>
 
@@ -64,7 +80,7 @@
                 <p class="text-muted-foreground">Loading courses...</p>
             </div>
 
-            <section id="courseGrid" class="grid-cols-1 md:grid-cols-2 gap-8 hidden">
+            <section id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden">
                 </section>
 
             <section id="noResults" class="text-center py-16 hidden">
@@ -157,7 +173,7 @@
                 
                 const response = await api.getCourses(currentPage, currentLimit, currentSearch, currentCategory);
                 const courses = response.data || response.courses || response;
-                const meta = response.meta || response.pagination || {};
+                const meta = response.pagination || response.meta || {};
 
                 if (Array.isArray(courses) && courses.length > 0) {
                     displayCourses(courses);
@@ -266,18 +282,19 @@
         // Update results info
         function updateResultsInfo(meta) {
             const info = document.getElementById('resultsInfo');
-            const total = meta.total || 0;
+            const total = meta.total_items || meta.total || 0;
             const currentShowing = Math.min(currentLimit, total);
             const startItem = total > 0 ? ((currentPage - 1) * currentLimit) + 1 : 0;
             const endItem = Math.min(startItem + currentShowing - 1, total);
             
             info.textContent = `Showing ${startItem}-${endItem} of ${total} courses`;
+            info.classList.remove('hidden');
         }
 
         // Update pagination
         function updatePagination(meta) {
             const pagination = document.getElementById('pagination');
-            totalPages = meta.totalPages || Math.ceil((meta.total || 0) / currentLimit);
+            totalPages = meta.total_pages || meta.totalPages || Math.ceil((meta.total_items || meta.total || 0) / currentLimit);
             
             if (totalPages <= 1) {
                 pagination.classList.add('hidden');

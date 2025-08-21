@@ -60,8 +60,35 @@
             </div>
         </section>
         
+        <!-- Search and Filter Section -->
+        <section class="mb-8 p-6 card">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="md:col-span-2">
+                    <label for="searchInput" class="label mb-2 block">Search Courses</label>
+                    <input type="text" id="searchInput" class="input" placeholder="Search by title, instructor...">
+                </div>
+                <div>
+                    <label for="statusFilter" class="label mb-2 block">Status</label>
+                    <select id="statusFilter" class="input w-full">
+                        <option value="">All Status</option>
+                        <option value="not-started">Not Started</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="searchBtn" class="btn btn-primary btn-lg w-full">Filter</button>
+                </div>
+            </div>
+            
+            <!-- Results Info -->
+            <div id="resultsInfo" class="mt-4 text-sm text-muted-foreground hidden">
+                Showing results...
+            </div>
+        </section>
+        
         <div id="loadingSpinner" class="text-center py-16">...</div>
-        <section id="coursesGrid" class="grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden"></section>
+        <section id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 hidden"></section>
         <section id="emptyState" class="text-center py-16 hidden">
             <div class="text-6xl mb-4">🎒</div>
             <h3 class="text-2xl font-semibold mb-2">Your backpack is empty!</h3>
@@ -153,6 +180,7 @@
                     if (filteredCourses.length > 0) {
                         displayCourses(filteredCourses);
                         updateStats(allCourses);
+                        updateResultsInfo({ total: filteredCourses.length });
                         updatePagination(meta);
                         
                         grid.classList.remove('hidden');
@@ -162,10 +190,12 @@
                     } else {
                         emptyState.classList.remove('hidden');
                         updateStats(allCourses);
+                        updateResultsInfo({ total: 0 });
                     }
                 } else {
                     emptyState.classList.remove('hidden');
                     updateStats([]);
+                    updateResultsInfo({ total: 0 });
                 }
 
             } catch (error) {
@@ -245,11 +275,35 @@
             const progress = getCourseProgress(course);
             const buttonText = progress === 0 ? 'Start Learning' : progress === 100 ? 'Review Course' : 'Continue Learning';
             
+            // Generate a consistent placeholder image based on course title
+            const getPlaceholderImage = (title) => {
+                const hash = title.split('').reduce((a, b) => {
+                    a = ((a << 5) - a) + b.charCodeAt(0);
+                    return a & a;
+                }, 0);
+                const imageId = Math.abs(hash) % 1000 + 1;
+                return `https://picsum.photos/400/300?random=${imageId}`;
+            };
+
+            // Create image element with better error handling
+            const createImageElement = (course) => {
+                if (course.thumbnail_image) {
+                    return `<img src="${course.thumbnail_image}" 
+                                 alt="${course.title}" 
+                                 class="w-full h-full object-cover"
+                                 onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');"
+                                 loading="lazy">`;
+                } else {
+                    return `<img src="${getPlaceholderImage(course.title)}" 
+                                 alt="${course.title}" 
+                                 class="w-full h-full object-cover"
+                                 loading="lazy">`;
+                }
+            };
+            
             card.innerHTML = `
                 <div class="h-48 bg-gradient-minion flex items-center justify-center">
-                     ${course.thumbnail_image ? 
-                        `<img src="${course.thumbnail_image}" alt="${course.title}" class="w-full h-full object-cover">` : 
-                        '<span class="text-5xl">🎓</span>'}
+                     ${createImageElement(course)}
                 </div>
                 <div class="p-6">
                     <h3 class="text-lg font-bold mb-2 h-14">${course.title}</h3>
@@ -265,7 +319,7 @@
                         </div>
                     </div>
 
-                    <button onclick="continueCourse(${course.id})" class="btn btn-primary w-full">
+                    <button onclick="continueCourse(${course.id})" class="btn btn-primary w-full btn-md">
                         ${buttonText}
                     </button>
                 </div>
@@ -303,6 +357,20 @@
             document.getElementById('totalCourses').textContent = total;
             document.getElementById('completedCourses').textContent = completed;
             document.getElementById('inProgressCourses').textContent = inProgress;
+        }
+
+        // Update results info
+        function updateResultsInfo(meta) {
+            const info = document.getElementById('resultsInfo');
+            const total = meta.total || 0;
+            
+            if (total > 0) {
+                info.textContent = `Showing ${total} course${total !== 1 ? 's' : ''}`;
+                info.classList.remove('hidden');
+            } else {
+                info.textContent = 'No courses found';
+                info.classList.remove('hidden');
+            }
         }
 
         // Update pagination
@@ -390,6 +458,9 @@
 
         // Setup event listeners
         function setupEventListeners() {
+            // Search button
+            document.getElementById('searchBtn').addEventListener('click', performSearch);
+            
             // Search input
             document.getElementById('searchInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {

@@ -32,12 +32,26 @@ export class CoursesController {
   @Get()
   findAll(
     @Query('q') search?: string,
+    @Query('category') category?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.findAll(search, pageNumber, limitNumber);
+    return this.coursesService.findAll(search, pageNumber, limitNumber, category);
+  }
+
+  @Get('my-courses')
+  getMyCourses(
+    @Request() req,
+    @Query('q') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const userId = req.user.id;
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
+    return this.coursesService.getMyCourses(userId, search, pageNumber, limitNumber);
   }
 
   @Get(':id')
@@ -66,19 +80,6 @@ export class CoursesController {
   buyCourse(@Param('id') courseId: string, @Request() req) {
     const userId = req.user.id;
     return this.coursesService.buy(courseId, userId);
-  }
-
-  @Get('my-courses')
-  getMyCourses(
-    @Request() req,
-    @Query('q') search?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const userId = req.user.id;
-    const pageNumber = page ? parseInt(page, 10) : 1;
-    const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.getMyCourses(userId, search, pageNumber, limitNumber);
   }
 
   @Get(':courseId/modules')

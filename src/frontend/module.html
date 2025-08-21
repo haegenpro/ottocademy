@@ -23,6 +23,13 @@
     <main class="container py-12">
         <div id="loadingSpinner" class="text-center py-24">...</div>
 
+        <div id="errorState" class="text-center py-24 hidden">
+            <div class="text-6xl mb-4">❌</div>
+            <h3 class="text-2xl font-semibold mb-2">Something went wrong</h3>
+            <p class="text-muted-foreground mb-6">Unable to load course content. Please try again later.</p>
+            <a href="my-courses.html" class="btn btn-primary">← Back to My Courses</a>
+        </div>
+
         <div id="courseContent" class="hidden">
             <div class="card p-6 mb-8">
                 <div class="flex justify-between items-center mb-2 font-semibold">
@@ -46,7 +53,13 @@
                 </aside>
 
                 <div class="lg:col-span-3">
-                    <div id="moduleContentArea" class="space-y-6">
+                    <div id="noModuleSelected" class="card p-12 text-center">
+                        <div class="text-6xl mb-4">📚</div>
+                        <h3 class="text-xl font-semibold mb-2">Select a Module</h3>
+                        <p class="text-muted-foreground">Choose a module from the sidebar to view its content.</p>
+                    </div>
+                    
+                    <div id="moduleContentArea" class="space-y-6 hidden">
                         <div class="card p-6">
                             <div class="flex justify-between items-center">
                                 <div>
@@ -57,9 +70,43 @@
                             </div>
                         </div>
                         <div class="card">
-                            <div id="videoContent" class="hidden aspect-video bg-black rounded-xl">
-                                <video id="videoPlayer" controls class="w-full h-full rounded-xl"></video>
+                            <div class="card-header">
+                                <div class="flex gap-2">
+                                    <button id="pdfTab" onclick="switchContentTab('pdf')" class="btn btn-sm btn-outline hidden">📄 PDF</button>
+                                    <button id="videoTab" onclick="switchContentTab('video')" class="btn btn-sm btn-outline hidden">🎥 Video</button>
+                                </div>
                             </div>
+                            
+                            <div id="pdfContent" class="hidden p-6">
+                                <div class="text-center space-y-4">
+                                    <div class="text-6xl">📄</div>
+                                    <h3 class="text-xl font-semibold">PDF Material</h3>
+                                    <p class="text-muted-foreground">Click below to view or download the PDF content for this module.</p>
+                                    <div class="flex gap-4 justify-center">
+                                        <a id="pdfViewLink" href="#" target="_blank" class="btn btn-primary">📖 View PDF</a>
+                                        <a id="pdfDownloadLink" href="#" download class="btn btn-outline">⬇️ Download PDF</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="videoContent" class="hidden aspect-video bg-black rounded-xl">
+                                <video id="videoPlayer" controls class="w-full h-full rounded-xl">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <div id="videoPlaceholder" class="flex items-center justify-center h-full text-white">
+                                    <div class="text-center">
+                                        <div class="text-6xl mb-4">🎥</div>
+                                        <p>Video content will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="noContent" class="hidden p-12 text-center">
+                                <div class="text-6xl mb-4">📚</div>
+                                <h3 class="text-xl font-semibold mb-2">No Content Available</h3>
+                                <p class="text-muted-foreground">This module doesn't have any video or PDF content yet.</p>
+                            </div>
+                            
                             <div id="certificateSection" class="hidden text-center p-12">
                                  <div class="text-7xl mb-4">🎉</div>
                                 <h2 class="text-3xl font-bold mb-2">Congratulations!</h2>
@@ -198,17 +245,8 @@
             completeBtn.textContent = isCompleted ? 'Mark Incomplete' : 'Mark as Complete';
             completeBtn.className = `btn btn-sm ${isCompleted ? 'btn-outline' : 'btn-primary'}`;
             
-            const videoPlayer = document.getElementById('videoPlayer');
-            const videoContent = document.getElementById('videoContent');
-            const certSection = document.getElementById('certificateSection');
-
-            videoContent.classList.add('hidden');
-            certSection.classList.add('hidden'); // Hide by default
-
-            if(module.video_content) {
-                videoPlayer.src = module.video_content;
-                videoContent.classList.remove('hidden');
-            }
+            // Setup content tabs based on available content
+            setupContentTabs(module);
         }
         
         function checkCourseCompletion() {

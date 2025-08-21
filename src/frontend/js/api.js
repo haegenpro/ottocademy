@@ -136,7 +136,7 @@ class ApiService {
             limit: limit.toString()
         });
         
-        if (search) params.append('search', search);
+        if (search) params.append('q', search);
         if (category) params.append('category', category);
         
         return await this.request(`/courses?${params}`);
@@ -163,8 +163,7 @@ class ApiService {
 
     // Modules
     async getCourseModules(courseId) {
-        const course = await this.getCourse(courseId);
-        return course.modules || [];
+        return await this.request(`/courses/${courseId}/modules`);
     }
 
     async getModule(courseId, moduleId) {
@@ -206,10 +205,10 @@ class ApiService {
 
 // Utility functions
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('id-ID', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'IDR'
-    }).format(amount);
+        currency: 'USD'
+    }).format(amount / 100);
 }
 
 function formatDate(dateString) {

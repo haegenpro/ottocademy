@@ -20,18 +20,24 @@ export class CoursesService {
     });
   }
 
-  async findAll(search?: string, page: number = 1, limit: number = 15) {
+  async findAll(search?: string, page: number = 1, limit: number = 15, category?: string) {
     const skip = (page - 1) * limit;
     
-    const where = search
-      ? {
-          OR: [
-            { title: { contains: search, mode: 'insensitive' as const } },
-            { instructor: { contains: search, mode: 'insensitive' as const } },
-            { topics: { has: search } },
-          ],
-        }
-      : {};
+    const where: any = {};
+    
+    // Handle search
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' as const } },
+        { instructor: { contains: search, mode: 'insensitive' as const } },
+        { topics: { has: search } },
+      ];
+    }
+    
+    // Handle category filter
+    if (category) {
+      where.category = category;
+    }
 
     const [courses, total] = await Promise.all([
       this.prisma.course.findMany({
@@ -50,6 +56,7 @@ export class CoursesService {
 
     const coursesWithModuleCount = courses.map(course => ({
       ...course,
+      price: course.price / 100, // Convert from cents to display units
       total_modules: course.modules.length,
       modules: undefined,
     }));
@@ -78,7 +85,12 @@ export class CoursesService {
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
-    return course;
+    
+    // Convert price from cents to display units
+    return {
+      ...course,
+      price: course.price / 100,
+    };
   }
 
   async update(id: string, updateCourseDto: UpdateCourseDto, thumbnailPath?: string) {
@@ -86,7 +98,7 @@ export class CoursesService {
 
     const priceInCents = updateCourseDto.price ? updateCourseDto.price * 100 : undefined;
 
-    return this.prisma.course.update({
+    const updatedCourse = await this.prisma.course.update({
       where: { id },
       data: {
         ...updateCourseDto,
@@ -94,6 +106,12 @@ export class CoursesService {
         thumbnail_image: thumbnailPath,
       },
     });
+
+    // Convert price back to display units
+    return {
+      ...updatedCourse,
+      price: updatedCourse.price / 100,
+    };
   }
 
   async remove(id: string) {

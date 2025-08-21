@@ -14,8 +14,9 @@ export class ModulesService {
     createModuleDto: CreateModuleDto,
     files?: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
   ) {
-    const pdfPath = files?.pdf_content?.[0]?.path;
-    const videoPath = files?.video_content?.[0]?.path;
+    // Convert file paths to URLs that can be served by the static asset middleware
+    const pdfPath = files?.pdf_content?.[0]?.path?.replace(/\\/g, '/').replace('./public/', '');
+    const videoPath = files?.video_content?.[0]?.path?.replace(/\\/g, '/').replace('./public/', '');
 
     return this.prisma.module.create({
       data: {
@@ -151,15 +152,24 @@ export class ModulesService {
       throw new NotFoundException(`Module with ID "${id}" not found.`);
     }
 
-    const pdfPath = files.pdf_content?.[0]?.path;
-    const videoPath = files.video_content?.[0]?.path;
+    // Convert file paths to URLs that can be served by the static asset middleware
+    const pdfPath = files.pdf_content?.[0]?.path?.replace(/\\/g, '/').replace('./public/', '');
+    const videoPath = files.video_content?.[0]?.path?.replace(/\\/g, '/').replace('./public/', '');
+
+    // Clean up old files if new ones are uploaded
+    if (pdfPath && module.pdf_content) {
+      try { await fs.unlink(`./public/${module.pdf_content}`); } catch (e) { console.error('Error deleting old PDF:', e); }
+    }
+    if (videoPath && module.video_content) {
+      try { await fs.unlink(`./public/${module.video_content}`); } catch (e) { console.error('Error deleting old video:', e); }
+    }
 
     return this.prisma.module.update({
       where: { id },
       data: {
         ...updateModuleDto,
-        pdf_content: pdfPath,
-        video_content: videoPath,
+        pdf_content: pdfPath || module.pdf_content,
+        video_content: videoPath || module.video_content,
       },
     });
   }
@@ -171,11 +181,12 @@ export class ModulesService {
       throw new NotFoundException(`Module with ID "${id}" not found.`);
     }
     
+    // Clean up files
     if (module.pdf_content) {
-      try { await fs.unlink(module.pdf_content); } catch (e) { console.error(e); }
+      try { await fs.unlink(`./public/${module.pdf_content}`); } catch (e) { console.error('Error deleting PDF:', e); }
     }
     if (module.video_content) {
-      try { await fs.unlink(module.video_content); } catch (e) { console.error(e); }
+      try { await fs.unlink(`./public/${module.video_content}`); } catch (e) { console.error('Error deleting video:', e); }
     }
 
     await this.prisma.module.delete({ where: { id } });
