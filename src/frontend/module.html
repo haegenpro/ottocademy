@@ -208,6 +208,18 @@
 
             } catch (error) {
                 console.error('Failed to load course modules:', error);
+                
+                // If user hasn't purchased the course, redirect to course detail
+                if (error.message && (error.message.includes('403') || error.message.includes('Forbidden') || error.message.includes('not purchased'))) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const courseId = urlParams.get('courseId');
+                    showToast('You need to purchase this course to access the modules.', 'error');
+                    setTimeout(() => {
+                        window.location.href = `/course-detail.html?id=${courseId}`;
+                    }, 2000);
+                    return;
+                }
+                
                 showErrorState();
             }
         }

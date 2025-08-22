@@ -272,7 +272,8 @@
             
             if (isPurchased) {
                 container.innerHTML = `
-                    <button onclick="goToModules()" class="btn btn-primary w-full">
+                    <button onclick="goToModules()" 
+                            class="btn btn-primary w-full btn-lg transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95 shadow-lg">
                         📚 Start Learning
                     </button>
                     <button onclick="downloadCertificate()" id="certificateBtn" class="btn btn-secondary w-full hidden">
@@ -287,9 +288,6 @@
                                 id="purchaseBtn">
                             🛒 Purchase Course
                         </button>
-                        <div class="text-sm text-muted-foreground text-center">
-                            💰 Price: <span class="font-semibold text-primary">${formatCurrency(course.price)}</span>
-                        </div>
                     </div>
                 `;
             }

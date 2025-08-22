@@ -113,6 +113,11 @@ export class AuthService {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    
+    // Convert balance from cents to dollars
+    return {
+      ...userWithoutPassword,
+      balance: userWithoutPassword.balance / 100,
+    };
   }
 }
