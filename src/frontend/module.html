@@ -32,9 +32,19 @@
 
         <div id="courseContent" class="hidden">
             <div class="card p-6 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 id="courseTitle" class="text-2xl font-bold">Course Title</h1>
+                        <p id="courseInstructor" class="text-muted-foreground">👨‍🏫 Instructor</p>
+                    </div>
+                    <div id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</div>
+                </div>
                 <div class="flex justify-between items-center mb-2 font-semibold">
                     <span>Course Progress</span>
-                    <span id="progressText">0%</span>
+                    <div class="flex gap-4 text-sm">
+                        <span id="progressText">0% Complete</span>
+                        <span id="completedModules">0 completed</span>
+                    </div>
                 </div>
                 <div class="w-full bg-muted rounded-full h-4">
                     <div id="progressFill" class="bg-primary h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
@@ -226,9 +236,13 @@
 
         // Display course information
         function displayCourseInfo() {
-            document.getElementById('courseTitle').textContent = currentCourse.title;
-            document.getElementById('courseInstructor').textContent = `👨‍🏫 ${currentCourse.instructor}`;
-            document.getElementById('courseBreadcrumb').textContent = currentCourse.title;
+            const courseTitle = document.getElementById('courseTitle');
+            const courseInstructor = document.getElementById('courseInstructor');
+            const courseBreadcrumb = document.getElementById('courseBreadcrumb');
+            
+            if (courseTitle) courseTitle.textContent = currentCourse.title;
+            if (courseInstructor) courseInstructor.textContent = `👨‍🏫 ${currentCourse.instructor}`;
+            if (courseBreadcrumb) courseBreadcrumb.textContent = currentCourse.title;
         }
 
         // Display modules list
@@ -307,8 +321,8 @@
             const videoContent = document.getElementById('videoContent');
             const noContent = document.getElementById('noContent');
 
-            const hasPdf = module.pdf_content || module.pdfContent;
-            const hasVideo = module.video_content || module.videoContent;
+            const hasPdf = module.pdf_content && module.pdf_content !== null;
+            const hasVideo = module.video_content && module.video_content !== null;
 
             // Reset tabs
             pdfTab.classList.add('hidden');
@@ -319,7 +333,10 @@
 
             if (hasPdf) {
                 pdfTab.classList.remove('hidden');
-                document.getElementById('pdfDownloadLink').href = module.pdf_content || module.pdfContent;
+                const pdfViewLink = document.getElementById('pdfViewLink');
+                const pdfDownloadLink = document.getElementById('pdfDownloadLink');
+                if (pdfViewLink) pdfViewLink.href = module.pdf_content;
+                if (pdfDownloadLink) pdfDownloadLink.href = module.pdf_content;
             }
 
             if (hasVideo) {
@@ -327,9 +344,13 @@
                 const videoPlayer = document.getElementById('videoPlayer');
                 const videoPlaceholder = document.getElementById('videoPlaceholder');
                 
-                videoPlayer.src = module.video_content || module.videoContent;
-                videoPlayer.classList.remove('hidden');
-                videoPlaceholder.classList.add('hidden');
+                if (videoPlayer) {
+                    videoPlayer.src = module.video_content;
+                    videoPlayer.classList.remove('hidden');
+                }
+                if (videoPlaceholder) {
+                    videoPlaceholder.classList.add('hidden');
+                }
             }
 
             // Show default content
@@ -375,7 +396,7 @@
             if (!currentModule) return;
 
             try {
-                await api.completeModule(currentCourse.id, currentModule.id);
+                await api.completeModule(currentModule.id);
                 
                 // Update local state
                 currentModule.isCompleted = !currentModule.isCompleted;

@@ -171,7 +171,7 @@ class ApiService {
         return modules.find(module => module.id === moduleId);
     }
 
-    async completeModule(courseId, moduleId) {
+    async completeModule(moduleId) {
         return await this.request(`/modules/${moduleId}/complete`, {
             method: 'PATCH'
         });
