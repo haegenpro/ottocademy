@@ -98,12 +98,24 @@
     <!-- Purchase Confirmation Modal -->
     <div id="purchaseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold mb-4">Confirm Purchase</h3>
-            <p class="text-muted-foreground mb-6">
-                Are you sure you want to purchase this course for <span id="modalPrice" class="font-semibold"></span>?
-            </p>
+            <h3 class="text-xl font-bold mb-4">🛒 Confirm Purchase</h3>
+            <div class="space-y-3 mb-6">
+                <p class="text-muted-foreground">
+                    Are you sure you want to purchase this course?
+                </p>
+                <div class="bg-gray-50 p-3 rounded-lg space-y-2">
+                    <div class="flex justify-between">
+                        <span>Course Price:</span>
+                        <span id="modalPrice" class="font-semibold text-primary"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Your Balance:</span>
+                        <span id="modalBalance" class="font-semibold text-green-600"></span>
+                    </div>
+                </div>
+            </div>
             <div class="flex gap-3">
-                <button onclick="confirmPurchase()" class="btn btn-primary flex-1">
+                <button onclick="confirmPurchase()" id="confirmPurchaseBtn" class="btn btn-primary flex-1">
                     Confirm Purchase
                 </button>
                 <button onclick="closePurchaseModal()" class="btn btn-outline flex-1">
@@ -120,6 +132,8 @@
     <script>
         let currentCourse = null;
         let courseModules = [];
+        let userInfo = null;
+        let isPurchased = false;
 
         // Check authentication
         if (!requireAuth()) {
@@ -141,6 +155,8 @@
                 }
                 
                 const profile = await api.getProfile();
+                userInfo = profile; // Store user info globally
+                
                 const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
                 document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
                 
@@ -197,29 +213,18 @@
             document.getElementById('courseInstructor').textContent = `👨‍🏫 By ${course.instructor}`;
             document.getElementById('courseDescription').textContent = course.description;
 
-            // Generate a consistent placeholder image based on course title
-            const getPlaceholderImage = (title) => {
-                const hash = title.split('').reduce((a, b) => {
-                    a = ((a << 5) - a) + b.charCodeAt(0);
-                    return a & a;
-                }, 0);
-                const imageId = Math.abs(hash) % 1000 + 1;
-                return `https://picsum.photos/800/400?random=${imageId}`;
-            };
-
             // Set course image with proper error handling
             const courseImageElement = document.getElementById('courseImage');
             if (course.thumbnail_image) {
                 courseImageElement.innerHTML = `<img src="${course.thumbnail_image}" 
                      alt="${course.title}" 
                      class="w-full h-full object-cover rounded-xl shadow-lg" 
-                     onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');" 
                      loading="lazy">`;
             } else {
-                courseImageElement.innerHTML = `<img src="${getPlaceholderImage(course.title)}" 
-                     alt="${course.title}" 
-                     class="w-full h-full object-cover rounded-xl shadow-lg" 
-                     loading="lazy">`;
+                // Fallback to a simple colored div if no image
+                courseImageElement.innerHTML = `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 rounded-xl shadow-lg flex items-center justify-center">
+                    <span class="text-primary font-semibold text-6xl">📚</span>
+                </div>`;
             }
 
             const topicsContainer = document.getElementById('courseTopics');
@@ -227,6 +232,10 @@
             
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             document.getElementById('coursePrice').textContent = price;
+            
+            // Update module count from course data
+            const moduleCount = course.total_modules || course.modules?.length || 0;
+            document.getElementById('modulesCount').textContent = moduleCount;
             
             const isPurchased = course.isPurchased || course.is_purchased;
             const statusText = isPurchased ? 'You are enrolled' : 'Available for purchase';
@@ -272,11 +281,16 @@
                 `;
             } else {
                 container.innerHTML = `
-                    <button onclick="openPurchaseModal()" 
-                            class="btn btn-primary w-full transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95"
-                            id="purchaseBtn">
-                        🛒 Purchase Course
-                    </button>
+                    <div class="space-y-3">
+                        <button onclick="openPurchaseModal()" 
+                                class="btn btn-primary w-full btn-lg transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95 shadow-lg"
+                                id="purchaseBtn">
+                            🛒 Purchase Course
+                        </button>
+                        <div class="text-sm text-muted-foreground text-center">
+                            💰 Price: <span class="font-semibold text-primary">${formatCurrency(course.price)}</span>
+                        </div>
+                    </div>
                 `;
             }
         }
@@ -330,7 +344,25 @@
             }
             
             const price = currentCourse.price === 0 ? 'Free' : formatCurrency(currentCourse.price);
+            const userBalance = userInfo ? formatCurrency(userInfo.balance || 0) : 'Loading...';
+            
             document.getElementById('modalPrice').textContent = price;
+            document.getElementById('modalBalance').textContent = userBalance;
+            
+            // Check if user has sufficient balance
+            const hasEnoughBalance = !userInfo || currentCourse.price === 0 || (userInfo.balance >= currentCourse.price);
+            const confirmBtn = document.getElementById('confirmPurchaseBtn');
+            
+            if (!hasEnoughBalance) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Insufficient Balance';
+                confirmBtn.className = 'btn btn-secondary flex-1 opacity-50 cursor-not-allowed';
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm Purchase';
+                confirmBtn.className = 'btn btn-primary flex-1';
+            }
+            
             document.getElementById('purchaseModal').classList.remove('hidden');
         }
 

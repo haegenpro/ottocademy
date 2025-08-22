@@ -223,29 +223,18 @@
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             const isPurchased = course.isPurchased || course.is_purchased;
             
-            // Generate a consistent placeholder image based on course title
-            const getPlaceholderImage = (title) => {
-                const hash = title.split('').reduce((a, b) => {
-                    a = ((a << 5) - a) + b.charCodeAt(0);
-                    return a & a;
-                }, 0);
-                const imageId = Math.abs(hash) % 1000 + 1;
-                return `https://picsum.photos/400/300?random=${imageId}`;
-            };
-
-            // Create image element with better error handling
+            // Create image element with proper error handling
             const createImageElement = (course) => {
                 if (course.thumbnail_image) {
                     return `<img src="${course.thumbnail_image}" 
                                  alt="${course.title}" 
                                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                 onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');"
                                  loading="lazy">`;
                 } else {
-                    return `<img src="${getPlaceholderImage(course.title)}" 
-                                 alt="${course.title}" 
-                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                 loading="lazy">`;
+                    // Fallback to a simple colored div if no image
+                    return `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+                        <span class="text-primary font-semibold text-4xl">📚</span>
+                    </div>`;
                 }
             };
 

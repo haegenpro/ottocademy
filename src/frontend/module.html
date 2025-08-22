@@ -186,12 +186,18 @@
                 displayModulesList();
                 updateProgress();
 
-                // Select specific module if provided
+                // Select specific module if provided, otherwise select first unfinished module
                 if (moduleId) {
                     const moduleIndex = courseModules.findIndex(m => m.id == moduleId);
                     if (moduleIndex !== -1) {
                         selectModule(moduleIndex);
+                    } else {
+                        // If specified module not found, select first unfinished
+                        selectFirstUnfinishedModule();
                     }
+                } else {
+                    // Auto-select first unfinished module
+                    selectFirstUnfinishedModule();
                 }
 
                 // Check if course is completed
@@ -423,6 +429,26 @@
                 console.error('Certificate download failed:', error);
                 showToast('Failed to download certificate. Please try again.', 'error');
             }
+        }
+
+        // Select first unfinished module
+        function selectFirstUnfinishedModule() {
+            if (courseModules.length === 0) {
+                document.getElementById('courseContent').classList.remove('hidden');
+                return;
+            }
+
+            // Find first incomplete module
+            let firstUnfinishedIndex = courseModules.findIndex(module => 
+                !module.is_completed && !module.isCompleted
+            );
+
+            // If all modules are completed, select the last module
+            if (firstUnfinishedIndex === -1) {
+                firstUnfinishedIndex = courseModules.length - 1;
+            }
+
+            selectModule(firstUnfinishedIndex);
         }
 
         // Go back to course detail

@@ -55,8 +55,9 @@ export class CoursesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.coursesService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    const userId = req.user?.id; // Optional user ID for purchase status
+    return this.coursesService.findOne(id, userId);
   }
 
   @UseGuards(AdminGuard)

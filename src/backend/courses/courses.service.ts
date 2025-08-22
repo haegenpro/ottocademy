@@ -73,7 +73,7 @@ export class CoursesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const course = await this.prisma.course.findUnique({ 
       where: { id },
       include: {
@@ -86,15 +86,31 @@ export class CoursesService {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
     
-    // Convert price from cents to display units
+    // Check if user has purchased this course
+    let isPurchased = false;
+    if (userId) {
+      const userCourse = await this.prisma.userCourse.findUnique({
+        where: { userId_courseId: { userId, courseId: id } },
+      });
+      isPurchased = !!userCourse;
+    }
+    
+    // Convert price from cents to display units and add module count and purchase status
     return {
       ...course,
       price: course.price / 100,
+      total_modules: course.modules.length,
+      isPurchased,
+      is_purchased: isPurchased, // For backward compatibility
     };
   }
 
   async update(id: string, updateCourseDto: UpdateCourseDto, thumbnailPath?: string) {
-    await this.findOne(id);
+    // Check if course exists (without user context)
+    const existingCourse = await this.prisma.course.findUnique({ where: { id } });
+    if (!existingCourse) {
+      throw new NotFoundException(`Course with ID "${id}" not found.`);
+    }
 
     const priceInCents = updateCourseDto.price ? updateCourseDto.price * 100 : undefined;
 
@@ -115,7 +131,11 @@ export class CoursesService {
   }
 
   async remove(id: string) {
-    const course = await this.findOne(id);
+    // Check if course exists (without user context)
+    const course = await this.prisma.course.findUnique({ where: { id } });
+    if (!course) {
+      throw new NotFoundException(`Course with ID "${id}" not found.`);
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.moduleCompletion.deleteMany({

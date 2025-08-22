@@ -16,6 +16,11 @@ async function bootstrap() {
       index: false, // Disable auto-serving index.html to avoid conflict with controller
     });
     
+    // Serve uploads directory for course images and files
+    app.useStaticAssets(join(process.cwd(), 'uploads'), {
+      prefix: '/uploads/',
+    });
+    
     // Set global API prefix for API routes only
     app.setGlobalPrefix('api', {
       exclude: [

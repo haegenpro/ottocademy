@@ -275,29 +275,21 @@
             const progress = getCourseProgress(course);
             const buttonText = progress === 0 ? 'Start Learning' : progress === 100 ? 'Review Course' : 'Continue Learning';
             
-            // Generate a consistent placeholder image based on course title
-            const getPlaceholderImage = (title) => {
-                const hash = title.split('').reduce((a, b) => {
-                    a = ((a << 5) - a) + b.charCodeAt(0);
-                    return a & a;
-                }, 0);
-                const imageId = Math.abs(hash) % 1000 + 1;
-                return `https://picsum.photos/400/300?random=${imageId}`;
-            };
-
-            // Create image element with better error handling
+            // Create image element with actual thumbnail or gradient fallback
             const createImageElement = (course) => {
                 if (course.thumbnail_image) {
                     return `<img src="${course.thumbnail_image}" 
                                  alt="${course.title}" 
                                  class="w-full h-full object-cover"
-                                 onerror="this.onerror=null; this.src='${getPlaceholderImage(course.title)}'; console.log('Failed to load image: ${course.thumbnail_image}');"
-                                 loading="lazy">`;
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                 loading="lazy">
+                            <div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-4xl" style="display: none;">
+                                📚
+                            </div>`;
                 } else {
-                    return `<img src="${getPlaceholderImage(course.title)}" 
-                                 alt="${course.title}" 
-                                 class="w-full h-full object-cover"
-                                 loading="lazy">`;
+                    return `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-4xl">
+                                📚
+                            </div>`;
                 }
             };
             
