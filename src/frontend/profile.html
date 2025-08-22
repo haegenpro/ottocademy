@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Grocademy</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-background">
+    <nav class="nav">
+        <div class="container">
+            <div class="flex items-center justify-between h-20">
+                <a href="index.html" class="flex items-center gap-2 text-2xl font-bold text-primary">
+                    <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
+                    <span>Grocademy</span>
+                </a>
+                <ul class="flex items-center space-x-6">
+                    <li><a href="courses.html" class="nav-link">Browse Courses</a></li>
+                    <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
+                    <li>
+                        <div class="text-sm">
+                            <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
+                        </div>
+                    </li>
+                    <li><a href="profile.html" class="flex items-center justify-center w-8 h-8 bg-primary/30 rounded-full">👤</a></li>
+                    <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-12">
+        <div class="max-w-2xl mx-auto">
+            <h1 class="text-4xl font-bold mb-8">Profile Settings</h1>
+            
+            <div id="loadingSpinner" class="text-center py-12">
+                <div class="spinner w-8 h-8 mx-auto mb-4"></div>
+                <p class="text-muted-foreground">Loading profile...</p>
+            </div>
+
+            <div id="profileContent" class="hidden space-y-8">
+                <!-- Profile Info Card -->
+                <div class="card p-6">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center text-2xl">👤</div>
+                        <div>
+                            <h2 class="text-xl font-semibold" id="displayName">Loading...</h2>
+                            <p class="text-muted-foreground" id="displayEmail">Loading...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-muted-foreground">Username:</span>
+                            <span id="displayUsername" class="font-medium ml-2">Loading...</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">Balance:</span>
+                            <span id="displayBalance" class="font-medium ml-2 text-primary">Loading...</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">Member since:</span>
+                            <span id="displayJoinDate" class="font-medium ml-2">Loading...</span>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">Account type:</span>
+                            <span id="displayRole" class="font-medium ml-2">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Username Form -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold mb-4">Change Username</h3>
+                    <form id="usernameForm" class="space-y-4">
+                        <div>
+                            <label for="newUsername" class="block text-sm font-medium mb-2">New Username</label>
+                            <input type="text" id="newUsername" name="newUsername" 
+                                   class="input w-full" placeholder="Enter new username" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Username</button>
+                    </form>
+                </div>
+
+                <!-- Change Password Form -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold mb-4">Change Password</h3>
+                    <form id="passwordForm" class="space-y-4">
+                        <div>
+                            <label for="currentPassword" class="block text-sm font-medium mb-2">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword" 
+                                   class="input w-full" placeholder="Enter current password" required>
+                        </div>
+                        <div>
+                            <label for="newPassword" class="block text-sm font-medium mb-2">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" 
+                                   class="input w-full" placeholder="Enter new password" required>
+                        </div>
+                        <div>
+                            <label for="confirmPassword" class="block text-sm font-medium mb-2">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" 
+                                   class="input w-full" placeholder="Confirm new password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Authentication required');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProfile();
+            setupEventListeners();
+        });
+
+        async function loadProfile() {
+            const spinner = document.getElementById('loadingSpinner');
+            const content = document.getElementById('profileContent');
+            
+            try {
+                const profile = await api.getProfile();
+                
+                document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(profile.balance)}`;
+                
+                document.getElementById('displayName').textContent = `${profile.firstName} ${profile.lastName}`;
+                document.getElementById('displayEmail').textContent = profile.email;
+                document.getElementById('displayUsername').textContent = profile.username;
+                document.getElementById('displayBalance').textContent = formatCurrency(profile.balance);
+                document.getElementById('displayRole').textContent = profile.isAdmin ? 'Administrator' : 'Student';
+                
+                const joinDate = new Date(profile.createdAt || Date.now()).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('displayJoinDate').textContent = joinDate;
+                
+                spinner.classList.add('hidden');
+                content.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+                showToast('Failed to load profile information.', 'error');
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('usernameForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updateUsername();
+            });
+
+            document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await updatePassword();
+            });
+        }
+
+        async function updateUsername() {
+            const newUsername = document.getElementById('newUsername').value.trim();
+            
+            if (!newUsername) {
+                showToast('Please enter a new username.', 'error');
+                return;
+            }
+
+            try {
+                await api.updateProfile({ username: newUsername });
+                showToast('Username updated successfully!', 'success');
+                document.getElementById('displayUsername').textContent = newUsername;
+                document.getElementById('newUsername').value = '';
+            } catch (error) {
+                console.error('Failed to update username:', error);
+                showToast('Failed to update username. It may already be taken.', 'error');
+            }
+        }
+
+        async function updatePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Please fill in all password fields.', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match.', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast('New password must be at least 6 characters long.', 'error');
+                return;
+            }
+
+            try {
+                await api.updatePassword({
+                    currentPassword,
+                    newPassword
+                });
+                
+                showToast('Password updated successfully!', 'success');
+                document.getElementById('passwordForm').reset();
+            } catch (error) {
+                console.error('Failed to update password:', error);
+                showToast('Failed to update password. Please check your current password.', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 
+                           type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+            
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-transform duration-300 translate-x-full`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (container.contains(toast)) {
+                        container.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

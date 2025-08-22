@@ -15,7 +15,11 @@
                     <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center text-xl">🍌</div>
                     <span id="courseBreadcrumb">Grocademy</span>
                 </a>
-                <button onclick="goBackToCourse()" class="btn btn-outline btn-sm">← Back to Course Details</button>
+                <div class="flex items-center gap-4">
+                    <div id="userBalance" class="text-sm text-primary font-semibold">Balance: Loading...</div>
+                    <a href="profile.html" class="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full hover:bg-primary/30 transition-colors">👤</a>
+                    <button onclick="goBackToCourse()" class="btn btn-outline btn-sm">← Back to Course Details</button>
+                </div>
             </div>
         </div>
     </nav>
@@ -37,7 +41,6 @@
                         <h1 id="courseTitle" class="text-2xl font-bold">Course Title</h1>
                         <p id="courseInstructor" class="text-muted-foreground">👨‍🏫 Instructor</p>
                     </div>
-                    <div id="userGreeting" class="text-sm text-muted-foreground">Hello! 👋</div>
                 </div>
                 <div class="flex justify-between items-center mb-2 font-semibold">
                     <span>Course Progress</span>
@@ -88,13 +91,26 @@
                             </div>
                             
                             <div id="pdfContent" class="hidden p-6">
-                                <div class="text-center space-y-4">
+                                <div class="text-center space-y-6">
                                     <div class="text-6xl">📄</div>
                                     <h3 class="text-xl font-semibold">PDF Material</h3>
-                                    <p class="text-muted-foreground">Click below to view or download the PDF content for this module.</p>
-                                    <div class="flex gap-4 justify-center">
-                                        <a id="pdfViewLink" href="#" target="_blank" class="btn btn-primary">📖 View PDF</a>
-                                        <a id="pdfDownloadLink" href="#" download class="btn btn-outline">⬇️ Download PDF</a>
+                                    <p class="text-muted-foreground">Access your PDF content below. You can view it online or download it for offline reading.</p>
+                                    
+                                    <!-- Large Action Buttons -->
+                                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                                        <button onclick="viewPDFInline()" class="btn btn-primary btn-lg">📖 View PDF Online</button>
+                                        <a id="pdfDownloadLink" href="#" download class="btn btn-outline btn-lg">⬇️ Download PDF</a>
+                                    </div>
+                                    
+                                    <!-- PDF Viewer Container -->
+                                    <div id="pdfViewerContainer" class="hidden mt-6">
+                                        <div class="border-2 border-muted rounded-lg overflow-hidden">
+                                            <div class="bg-muted p-3 flex justify-between items-center">
+                                                <span class="font-medium">PDF Viewer</span>
+                                                <button onclick="closePDFViewer()" class="btn btn-sm btn-outline">✕ Close</button>
+                                            </div>
+                                            <iframe id="pdfFrame" class="w-full h-96 border-0" src=""></iframe>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -144,29 +160,25 @@
         let currentModuleIndex = -1;
         let currentModule = null;
 
-        // Check authentication
         if (!requireAuth()) {
             throw new Error('Authentication required');
         }
 
-        // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
             await loadUserInfo();
             await loadCourseModules();
         });
 
-        // Load user information
         async function loadUserInfo() {
             try {
-                const profile = await api.getProfile();
-                document.getElementById('userGreeting').textContent = `Hello, ${profile.name}! 👋`;
+                const { balance } = await api.getProfile();
+                document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
-                document.getElementById('userGreeting').textContent = 'Hello! 👋';
+                document.getElementById('userBalance').textContent = 'Balance: --';
             }
         }
 
-        // Load course and modules
         async function loadCourseModules() {
             const urlParams = new URLSearchParams(window.location.search);
             const courseId = urlParams.get('courseId');
@@ -178,10 +190,8 @@
             }
 
             try {
-                // Load course details
                 currentCourse = await api.getCourse(courseId);
                 
-                // Load modules
                 const modulesResponse = await api.getCourseModules(courseId);
                 courseModules = modulesResponse.data || modulesResponse.modules || modulesResponse;
 
@@ -189,28 +199,23 @@
                     courseModules = [];
                 }
 
-                // Sort modules by order
                 courseModules.sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 displayCourseInfo();
                 displayModulesList();
                 updateProgress();
 
-                // Select specific module if provided, otherwise select first unfinished module
                 if (moduleId) {
                     const moduleIndex = courseModules.findIndex(m => m.id == moduleId);
                     if (moduleIndex !== -1) {
                         selectModule(moduleIndex);
                     } else {
-                        // If specified module not found, select first unfinished
                         selectFirstUnfinishedModule();
                     }
                 } else {
-                    // Auto-select first unfinished module
                     selectFirstUnfinishedModule();
                 }
 
-                // Check if course is completed
                 checkCourseCompletion();
 
                 document.getElementById('loadingSpinner').classList.add('hidden');
@@ -219,7 +224,6 @@
             } catch (error) {
                 console.error('Failed to load course modules:', error);
                 
-                // If user hasn't purchased the course, redirect to course detail
                 if (error.message && (error.message.includes('403') || error.message.includes('Forbidden') || error.message.includes('not purchased'))) {
                     const urlParams = new URLSearchParams(window.location.search);
                     const courseId = urlParams.get('courseId');
@@ -234,7 +238,6 @@
             }
         }
 
-        // Display course information
         function displayCourseInfo() {
             const courseTitle = document.getElementById('courseTitle');
             const courseInstructor = document.getElementById('courseInstructor');
@@ -245,7 +248,6 @@
             if (courseBreadcrumb) courseBreadcrumb.textContent = currentCourse.title;
         }
 
-        // Display modules list
         function displayModulesList() {
             const container = document.getElementById('modulesList');
             container.innerHTML = '';
@@ -274,10 +276,16 @@
             const completeBtn = document.getElementById('completeModuleBtn');
             const isCompleted = module.isCompleted || module.is_completed;
             
-            completeBtn.textContent = isCompleted ? 'Mark Incomplete' : 'Mark as Complete';
-            completeBtn.className = `btn btn-sm ${isCompleted ? 'btn-outline' : 'btn-primary'}`;
+            if (isCompleted) {
+                completeBtn.textContent = '✅ Completed';
+                completeBtn.className = 'btn btn-secondary';
+                completeBtn.disabled = true;
+            } else {
+                completeBtn.textContent = 'Mark as Complete';
+                completeBtn.className = 'btn btn-primary';
+                completeBtn.disabled = false;
+            }
             
-            // Setup content tabs based on available content
             setupContentTabs(module);
         }
         
@@ -292,28 +300,22 @@
             }
         }
 
-        // Select a module
         function selectModule(index) {
             if (index < 0 || index >= courseModules.length) return;
 
             currentModuleIndex = index;
             currentModule = courseModules[index];
 
-            // Update module list highlighting
             displayModulesList();
 
-            // Display module content
             displayModuleContent(currentModule);
 
-            // Update navigation buttons
             updateNavigationButtons();
 
-            // Show module content area
             document.getElementById('noModuleSelected').classList.add('hidden');
             document.getElementById('moduleContentArea').classList.remove('hidden');
         }
 
-        // Setup content tabs
         function setupContentTabs(module) {
             const pdfTab = document.getElementById('pdfTab');
             const videoTab = document.getElementById('videoTab');
@@ -324,7 +326,6 @@
             const hasPdf = module.pdf_content && module.pdf_content !== null;
             const hasVideo = module.video_content && module.video_content !== null;
 
-            // Reset tabs
             pdfTab.classList.add('hidden');
             videoTab.classList.add('hidden');
             pdfContent.classList.add('hidden');
@@ -333,10 +334,10 @@
 
             if (hasPdf) {
                 pdfTab.classList.remove('hidden');
-                const pdfViewLink = document.getElementById('pdfViewLink');
                 const pdfDownloadLink = document.getElementById('pdfDownloadLink');
-                if (pdfViewLink) pdfViewLink.href = module.pdf_content;
                 if (pdfDownloadLink) pdfDownloadLink.href = module.pdf_content;
+                
+                window.currentPdfUrl = module.pdf_content;
             }
 
             if (hasVideo) {
@@ -353,7 +354,6 @@
                 }
             }
 
-            // Show default content
             if (hasPdf) {
                 switchContentTab('pdf');
             } else if (hasVideo) {
@@ -363,14 +363,12 @@
             }
         }
 
-        // Switch content tab
         function switchContentTab(type) {
             const pdfTab = document.getElementById('pdfTab');
             const videoTab = document.getElementById('videoTab');
             const pdfContent = document.getElementById('pdfContent');
             const videoContent = document.getElementById('videoContent');
 
-            // Reset tab states
             pdfTab.classList.remove('btn-primary');
             pdfTab.classList.add('btn-outline');
             videoTab.classList.remove('btn-primary');
@@ -379,7 +377,6 @@
             pdfContent.classList.add('hidden');
             videoContent.classList.add('hidden');
 
-            // Activate selected tab
             if (type === 'pdf') {
                 pdfTab.classList.add('btn-primary');
                 pdfTab.classList.remove('btn-outline');
@@ -391,25 +388,28 @@
             }
         }
 
-        // Toggle module completion
         async function toggleModuleCompletion() {
             if (!currentModule) return;
+            
+            const isCompleted = currentModule.isCompleted || currentModule.is_completed;
+            if (isCompleted) {
+                showToast('Module is already completed!', 'info');
+                return;
+            }
 
             try {
                 await api.completeModule(currentModule.id);
                 
-                // Update local state
-                currentModule.isCompleted = !currentModule.isCompleted;
+                currentModule.isCompleted = true;
+                currentModule.is_completed = true;
                 courseModules[currentModuleIndex] = currentModule;
 
-                // Refresh display
                 displayModuleContent(currentModule);
                 displayModulesList();
                 updateProgress();
                 checkCourseCompletion();
 
-                const action = currentModule.isCompleted ? 'completed' : 'marked incomplete';
-                showToast(`Module ${action} successfully!`, 'success');
+                showToast('Module completed successfully!', 'success');
 
             } catch (error) {
                 console.error('Failed to update module completion:', error);
@@ -417,7 +417,6 @@
             }
         }
 
-        // Update progress bar
         function updateProgress() {
             const completedCount = courseModules.filter(m => m.isCompleted || m.is_completed).length;
             const totalCount = courseModules.length;
@@ -428,30 +427,34 @@
             document.getElementById('completedModules').textContent = `${completedCount} completed`;
         }
 
-        // Update navigation buttons
         function updateNavigationButtons() {
             const prevBtn = document.getElementById('prevModuleBtn');
             const nextBtn = document.getElementById('nextModuleBtn');
 
-            prevBtn.disabled = currentModuleIndex <= 0;
-            nextBtn.disabled = currentModuleIndex >= courseModules.length - 1;
-
-            if (currentModuleIndex > 0) {
+            if (currentModuleIndex <= 0) {
+                prevBtn.style.display = 'none';
+            } else {
+                prevBtn.style.display = 'inline-flex';
+                prevBtn.className = 'btn btn-outline';
+                prevBtn.disabled = false;
                 prevBtn.textContent = `← ${courseModules[currentModuleIndex - 1].title}`;
             }
 
-            if (currentModuleIndex < courseModules.length - 1) {
+            if (currentModuleIndex >= courseModules.length - 1) {
+                nextBtn.style.display = 'none';
+            } else {
+                nextBtn.style.display = 'inline-flex';
+                nextBtn.className = 'btn btn-outline';
+                nextBtn.disabled = false;
                 nextBtn.textContent = `${courseModules[currentModuleIndex + 1].title} →`;
             }
         }
 
-        // Navigate between modules
         function navigateModule(direction) {
             const newIndex = direction === 'prev' ? currentModuleIndex - 1 : currentModuleIndex + 1;
             selectModule(newIndex);
         }
 
-        // Download certificate
         async function downloadCertificate() {
             if (!currentCourse) return;
 
@@ -464,19 +467,16 @@
             }
         }
 
-        // Select first unfinished module
         function selectFirstUnfinishedModule() {
             if (courseModules.length === 0) {
                 document.getElementById('courseContent').classList.remove('hidden');
                 return;
             }
 
-            // Find first incomplete module
             let firstUnfinishedIndex = courseModules.findIndex(module => 
                 !module.is_completed && !module.isCompleted
             );
 
-            // If all modules are completed, select the last module
             if (firstUnfinishedIndex === -1) {
                 firstUnfinishedIndex = courseModules.length - 1;
             }
@@ -484,7 +484,6 @@
             selectModule(firstUnfinishedIndex);
         }
 
-        // Go back to course detail
         function goBackToCourse() {
             if (currentCourse) {
                 window.location.href = `course-detail.html?id=${currentCourse.id}`;
@@ -493,11 +492,66 @@
             }
         }
 
-        // Show error state
         function showErrorState() {
             document.getElementById('loadingSpinner').classList.add('hidden');
             document.getElementById('courseContent').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
+        }
+
+        function viewPDFInline() {
+            if (!window.currentPdfUrl) {
+                showToast('PDF not available', 'error');
+                return;
+            }
+            
+            const container = document.getElementById('pdfViewerContainer');
+            const frame = document.getElementById('pdfFrame');
+            
+            frame.src = window.currentPdfUrl;
+            
+            container.classList.remove('hidden');
+            
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            showToast('PDF loaded successfully!', 'success');
+        }
+
+        function closePDFViewer() {
+            const container = document.getElementById('pdfViewerContainer');
+            const frame = document.getElementById('pdfFrame');
+            
+            container.classList.add('hidden');
+            
+            frame.src = '';
+            
+            showToast('PDF viewer closed', 'info');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container') || document.body;
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 
+                           type === 'error' ? 'bg-red-500' : 
+                           type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+            
+            toast.className = `fixed top-4 right-4 z-50 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (container.contains(toast)) {
+                        container.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
     </script>
 </body>

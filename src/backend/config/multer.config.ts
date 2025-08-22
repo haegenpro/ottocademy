@@ -27,7 +27,6 @@ export const multerConfig: MulterOptions = {
       cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-      // Generate unique filename with original extension
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const extension = extname(file.originalname);
       const baseName = file.originalname.replace(extension, '').replace(/[^a-zA-Z0-9]/g, '-');
@@ -35,7 +34,6 @@ export const multerConfig: MulterOptions = {
     },
   }),
   fileFilter: (req, file, cb) => {
-    // Define allowed file types
     const allowedMimes = {
       'thumbnail_image': ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
       'pdf_content': ['application/pdf'],

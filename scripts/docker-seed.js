@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  // Check if seeding has already been done
   const existingAdminCount = await prisma.user.count({
     where: { isAdmin: true }
   });
@@ -20,11 +19,9 @@ async function main() {
   // === USERS ===
   console.log('Creating users...');
 
-  // Hash passwords
   const hashedAdminPassword = await bcrypt.hash('admin123', 10);
   const hashedUserPassword = await bcrypt.hash('password123', 10);
 
-  // Create admin user
   const admin = await prisma.user.create({
     data: {
       email: 'admin@grocademy.com',
@@ -37,7 +34,6 @@ async function main() {
     },
   });
 
-  // Create regular users
   const users = await Promise.all([
     prisma.user.create({
       data: {
@@ -231,7 +227,7 @@ async function main() {
   // === MODULES ===
   console.log('Creating modules...');
 
-  // Web Development Course Modules - with one test video module
+  // Web Development Course Modules
   const webDevModules = [
     {
       title: 'HTML Fundamentals',
@@ -355,7 +351,6 @@ async function main() {
 
   await prisma.module.createMany({ data: pythonModules });
 
-  // Create basic modules for other courses
   const otherCourses = [mobileCourse, dataAnalyticsCourse, machineLearningCourse, digitalMarketingCourse, entrepreneurshipCourse, productivityCourse, englishCourse, photographyCourse];
   
   for (const course of otherCourses) {
@@ -395,10 +390,8 @@ async function main() {
   // === MODULE COMPLETIONS ===
   console.log('Creating module completions...');
   
-  // Get all modules for progress tracking
   const allModules = await prisma.module.findMany();
   
-  // John Doe's progress in Web Development (first 3 modules completed)
   const johnWebDevModules = allModules.filter(m => m.courseId === webDevCourse.id).slice(0, 3);
   const johnWebDevCompletions = johnWebDevModules.map(module => ({
     userId: users[0].id,
@@ -406,7 +399,6 @@ async function main() {
     isCompleted: true,
   }));
 
-  // John Doe's progress in Python (first 2 modules completed)
   const johnPythonModules = allModules.filter(m => m.courseId === pythonCourse.id).slice(0, 2);
   const johnPythonCompletions = johnPythonModules.map(module => ({
     userId: users[0].id,
@@ -414,7 +406,6 @@ async function main() {
     isCompleted: true,
   }));
 
-  // Jane Smith's progress in Data Analytics (first 4 modules completed)
   const janeDataModules = allModules.filter(m => m.courseId === dataAnalyticsCourse.id).slice(0, 4);
   const janeDataCompletions = janeDataModules.map(module => ({
     userId: users[1].id,
@@ -422,7 +413,6 @@ async function main() {
     isCompleted: true,
   }));
 
-  // Bob Johnson's progress in Mobile Development (first module completed)
   const bobMobileModules = allModules.filter(m => m.courseId === mobileCourse.id).slice(0, 1);
   const bobMobileCompletions = bobMobileModules.map(module => ({
     userId: users[2].id,
@@ -443,7 +433,6 @@ async function main() {
   // === CERTIFICATES ===
   console.log('Creating certificates...');
   
-  // John Doe gets certificate for Web Development (completed enough modules)
   await prisma.certificate.create({
     data: {
       userId: users[0].id,
@@ -452,7 +441,6 @@ async function main() {
     },
   });
 
-  // Jane Smith gets certificate for Data Analytics
   await prisma.certificate.create({
     data: {
       userId: users[1].id,

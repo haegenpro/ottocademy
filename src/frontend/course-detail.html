@@ -20,10 +20,10 @@
                     <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
                     <li>
                         <div class="text-sm">
-                            <span id="userGreeting" class="text-muted-foreground">Hello! 👋</span>
                             <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
                         </div>
                     </li>
+                    <li><a href="profile.html" class="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full hover:bg-primary/30 transition-colors">👤</a></li>
                     <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
                 </ul>
             </div>
@@ -135,18 +135,15 @@
         let userInfo = null;
         let isPurchased = false;
 
-        // Check authentication
         if (!requireAuth()) {
             throw new Error('Authentication required');
         }
 
-        // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
             await loadUserInfo();
             await loadCourseDetails();
         });
 
-        // Load user information
         async function loadUserInfo() {
             try {
                 if (!isAuthenticated()) {
@@ -155,30 +152,26 @@
                 }
                 
                 const profile = await api.getProfile();
-                userInfo = profile; // Store user info globally
+                userInfo = profile;
                 
                 const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
                 document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
                 
-                // Display user balance
                 const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 
                 if (error.message === 'Authentication required') {
-                    // Authentication failed - user will be redirected by API service
                     return;
                 }
                 
-                // For other errors, show a generic greeting
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
                 document.getElementById('userBalance').textContent = 'Balance: --';
                 showToast('Unable to load user profile', 'warning');
             }
         }
 
-        // Load course details
         async function loadCourseDetails() {
             const urlParams = new URLSearchParams(window.location.search);
             const courseId = urlParams.get('id');
@@ -192,7 +185,6 @@
                 currentCourse = await api.getCourse(courseId);
                 displayCourseDetails(currentCourse);
 
-                // Load modules if course is purchased
                 if (currentCourse.isPurchased || currentCourse.is_purchased) {
                     await loadCourseModules(courseId);
                 }
@@ -206,14 +198,12 @@
             }
         }
 
-        // Display course details
         function displayCourseDetails(course) {
             document.title = `${course.title} - Grocademy`;
             document.getElementById('courseTitle').textContent = course.title;
             document.getElementById('courseInstructor').textContent = `👨‍🏫 By ${course.instructor}`;
             document.getElementById('courseDescription').textContent = course.description;
 
-            // Set course image with proper error handling
             const courseImageElement = document.getElementById('courseImage');
             if (course.thumbnail_image) {
                 courseImageElement.innerHTML = `<img src="${course.thumbnail_image}" 
@@ -221,7 +211,6 @@
                      class="w-full h-full object-cover rounded-xl shadow-lg" 
                      loading="lazy">`;
             } else {
-                // Fallback to a simple colored div if no image
                 courseImageElement.innerHTML = `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 rounded-xl shadow-lg flex items-center justify-center">
                     <span class="text-primary font-semibold text-6xl">📚</span>
                 </div>`;
@@ -233,7 +222,6 @@
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             document.getElementById('coursePrice').textContent = price;
             
-            // Update module count from course data
             const moduleCount = course.total_modules || course.modules?.length || 0;
             document.getElementById('modulesCount').textContent = moduleCount;
             
@@ -246,7 +234,7 @@
 
         function displayModules(modules) {
             const container = document.getElementById('modulesList');
-            container.innerHTML = ''; // Clear first
+            container.innerHTML = '';
             modules.forEach((module, index) => {
                 const isCompleted = module.isCompleted || module.is_completed;
                 container.innerHTML += `
@@ -266,7 +254,6 @@
             });
         }
 
-        // Display action buttons
         function displayActionButtons(course, isPurchased) {
             const container = document.getElementById('actionButtons');
             
@@ -293,7 +280,6 @@
             }
         }
 
-        // Load course modules
         async function loadCourseModules(courseId) {
             try {
                 const response = await api.getCourseModules(courseId);
@@ -305,7 +291,6 @@
                     document.getElementById('courseModules').classList.remove('hidden');
                     document.getElementById('modulesCount').textContent = courseModules.length;
 
-                    // Check if all modules are completed for certificate
                     const completedModules = courseModules.filter(m => m.isCompleted || m.is_completed);
                     if (completedModules.length === courseModules.length && courseModules.length > 0) {
                         document.getElementById('certificateBtn').classList.remove('hidden');
@@ -316,7 +301,6 @@
             }
         }
 
-        // Update progress bar
         function updateProgress(modules) {
             const completedModules = modules.filter(m => m.isCompleted || m.is_completed);
             const progressPercentage = modules.length > 0 ? (completedModules.length / modules.length) * 100 : 0;
@@ -325,7 +309,6 @@
             document.getElementById('progressText').textContent = `${Math.round(progressPercentage)}% Complete (${completedModules.length}/${modules.length} modules)`;
         }
 
-        // Open purchase modal
         function openPurchaseModal() {
             console.log('openPurchaseModal called, currentCourse:', currentCourse, 'isPurchased:', isPurchased);
             
@@ -335,7 +318,6 @@
                 return;
             }
             
-            // Check if user already purchased this course
             if (isPurchased) {
                 showToast('You have already purchased this course!', 'warning');
                 return;
@@ -347,7 +329,6 @@
             document.getElementById('modalPrice').textContent = price;
             document.getElementById('modalBalance').textContent = userBalance;
             
-            // Check if user has sufficient balance
             const hasEnoughBalance = !userInfo || currentCourse.price === 0 || (userInfo.balance >= currentCourse.price);
             const confirmBtn = document.getElementById('confirmPurchaseBtn');
             
@@ -364,16 +345,13 @@
             document.getElementById('purchaseModal').classList.remove('hidden');
         }
 
-        // Close purchase modal
         function closePurchaseModal() {
             document.getElementById('purchaseModal').classList.add('hidden');
         }
 
-        // Confirm purchase
         async function confirmPurchase() {
             if (!currentCourse) return;
 
-            // Double-check if user already purchased this course
             if (isPurchased) {
                 showToast('You have already purchased this course!', 'warning');
                 closePurchaseModal();
@@ -384,10 +362,8 @@
                 await api.purchaseCourse(currentCourse.id);
                 showToast('Course purchased successfully!', 'success');
                 
-                // Refresh user info to update balance
                 await loadUserInfo();
                 
-                // Refresh the page to show purchased state
                 setTimeout(() => {
                     window.location.reload();
                 }, 1000);
@@ -400,23 +376,19 @@
             closePurchaseModal();
         }
 
-        // Go to modules (scroll to modules section)
         function goToModules() {
             const modulesSection = document.getElementById('courseModules');
             if (modulesSection && !modulesSection.classList.contains('hidden')) {
                 modulesSection.scrollIntoView({ behavior: 'smooth' });
             } else {
-                // If modules aren't loaded yet, redirect to module page
                 window.location.href = `module.html?courseId=${currentCourse.id}`;
             }
         }
 
-        // Open specific module
         function openModule(moduleId) {
             window.location.href = `module.html?courseId=${currentCourse.id}&moduleId=${moduleId}`;
         }
 
-        // Download certificate
         async function downloadCertificate() {
             if (!currentCourse) return;
 
@@ -429,14 +401,12 @@
             }
         }
 
-        // Show error state
         function showErrorState() {
             document.getElementById('loadingSpinner').classList.add('hidden');
             document.getElementById('courseDetails').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
         }
 
-        // Close modal when clicking outside
         document.getElementById('purchaseModal').addEventListener('click', (e) => {
             if (e.target.id === 'purchaseModal') {
                 closePurchaseModal();

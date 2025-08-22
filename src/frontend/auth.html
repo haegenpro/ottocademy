@@ -108,8 +108,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        // --- SCRIPT CHANGES ---
-        // Simplified the switchTab function
         function switchTab(tab) {
             const loginContainer = document.getElementById('loginFormContainer');
             const registerContainer = document.getElementById('registerFormContainer');
@@ -134,22 +132,16 @@
             clearMessages();
         }
 
-        // --- THE REST OF YOUR SCRIPT REMAINS LARGELY THE SAME ---
-        // (handleLogin, handleRegister, showMessage, setLoading, etc.)
-        // Ensure you copy over the rest of your original script logic here.
          let currentTab = 'login';
 
-        // Check if already authenticated
         if (isAuthenticated()) {
             window.location.href = 'courses.html';
         }
 
-        // Initialize page
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
         });
 
-        // Setup event listeners
         function setupEventListeners() {
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
             document.getElementById('registerForm').addEventListener('submit', handleRegister);

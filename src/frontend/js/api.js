@@ -5,10 +5,8 @@ class ApiService {
         this.token = localStorage.getItem('token');
         this.tokenExpiry = localStorage.getItem('tokenExpiry');
         
-        // Check token expiration on initialization
         this.checkTokenExpiration();
         
-        // Set up periodic token expiration checks (every 30 seconds)
         setInterval(() => this.checkTokenExpiration(), 30000);
     }
 
@@ -16,7 +14,6 @@ class ApiService {
         this.token = token;
         localStorage.setItem('token', token);
         
-        // Set token expiry to 24 hours from now (standard JWT expiration)
         const expiry = Date.now() + (60 * 60 * 1000);
         this.tokenExpiry = expiry;
         localStorage.setItem('tokenExpiry', expiry.toString());
@@ -34,7 +31,6 @@ class ApiService {
             console.warn('Token has expired');
             this.clearToken();
             
-            // Only redirect if we're not already on auth or index page
             if (!window.location.pathname.includes('auth.html') && 
                 !window.location.pathname.includes('index.html')) {
                 showToast('Your session has expired. Please log in again.', 'warning');
@@ -70,12 +66,10 @@ class ApiService {
             const response = await fetch(url, config);
             
             if (!response.ok) {
-                // Handle authentication errors
                 if (response.status === 401) {
                     console.warn('Authentication failed - token may be expired');
                     this.clearToken();
                     
-                    // Only redirect if we're not already on the auth page
                     if (!window.location.pathname.includes('auth.html') && 
                         !window.location.pathname.includes('index.html')) {
                         showToast('Your session has expired. Please log in again.', 'warning');
@@ -98,7 +92,6 @@ class ApiService {
         }
     }
 
-    // Authentication
     async login(email, password) {
         const response = await this.request('/auth/login', {
             method: 'POST',
@@ -129,7 +122,20 @@ class ApiService {
         return await this.request('/auth/self');
     }
 
-    // Courses
+    async updateProfile(profileData) {
+        return await this.request('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify(profileData)
+        });
+    }
+
+    async updatePassword(passwordData) {
+        return await this.request('/auth/password', {
+            method: 'PUT',
+            body: JSON.stringify(passwordData)
+        });
+    }
+
     async getCourses(page = 1, limit = 10, search = '', category = '') {
         const params = new URLSearchParams({
             page: page.toString(),
@@ -161,7 +167,6 @@ class ApiService {
         return await this.request(`/courses/my-courses?${params}`);
     }
 
-    // Modules
     async getCourseModules(courseId) {
         return await this.request(`/courses/${courseId}/modules`);
     }
@@ -177,7 +182,6 @@ class ApiService {
         });
     }
 
-    // Certificates
     async getCertificate(courseId) {
         return await this.request(`/certificates/course/${courseId}`);
     }
@@ -203,7 +207,6 @@ class ApiService {
     }
 }
 
-// Utility functions
 function formatCurrency(amount) {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -261,7 +264,6 @@ function isAuthenticated() {
         return false;
     }
     
-    // Check if token has expired
     if (Date.now() > parseInt(tokenExpiry)) {
         localStorage.removeItem('token');
         localStorage.removeItem('tokenExpiry');

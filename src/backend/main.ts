@@ -29,7 +29,8 @@ async function bootstrap() {
         'courses.html', 
         'course-detail.html',
         'module.html',
-        'my-courses.html'
+        'my-courses.html',
+        'profile.html'
       ]
     });
     

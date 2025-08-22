@@ -20,10 +20,10 @@
                     <li><a href="my-courses.html" class="nav-link active">My Courses</a></li>
                     <li>
                         <div class="text-sm">
-                            <span id="userGreeting" class="text-muted-foreground">Hello! 👋</span>
                             <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
                         </div>
                     </li>
+                    <li><a href="profile.html" class="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full hover:bg-primary/30 transition-colors">👤</a></li>
                     <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
                 </ul>
             </div>
@@ -77,7 +77,7 @@
                     </select>
                 </div>
                 <div>
-                    <button id="searchBtn" class="btn btn-primary btn-lg w-full">Filter</button>
+                    <button id="searchBtn" class="btn btn-primary w-full">Filter</button>
                 </div>
             </div>
             
@@ -113,19 +113,16 @@
         let totalPages = 1;
         let allCourses = [];
 
-        // Check authentication
         if (!requireAuth()) {
             throw new Error('Authentication required');
         }
 
-        // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
             await loadUserInfo();
             await loadMyCourses();
             setupEventListeners();
         });
 
-        // Load user information
         async function loadUserInfo() {
             try {
                 if (!isAuthenticated()) {
@@ -137,25 +134,21 @@
                 const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
                 document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
                 
-                // Display user balance
                 const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 
                 if (error.message === 'Authentication required') {
-                    // Authentication failed - user will be redirected by API service
                     return;
                 }
                 
-                // For other errors, show a generic greeting
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
                 document.getElementById('userBalance').textContent = 'Balance: --';
                 showToast('Unable to load user profile', 'warning');
             }
         }
 
-        // Load user's courses
         async function loadMyCourses() {
             const spinner = document.getElementById('loadingSpinner');
             const grid = document.getElementById('coursesGrid');
@@ -202,7 +195,6 @@
                 console.error('Failed to load courses:', error);
                 
                 if (error.message === 'Authentication required') {
-                    // Authentication failed - user will be redirected by API service
                     return;
                 }
                 
@@ -213,11 +205,9 @@
             }
         }
 
-        // Filter courses based on search and status
         function filterCourses(courses) {
             let filtered = courses;
 
-            // Search filter
             if (currentSearch) {
                 filtered = filtered.filter(course => 
                     course.title.toLowerCase().includes(currentSearch.toLowerCase()) ||
@@ -228,7 +218,6 @@
                 );
             }
 
-            // Status filter
             if (currentStatus) {
                 filtered = filtered.filter(course => {
                     const progress = getCourseProgress(course);
@@ -248,15 +237,23 @@
             return filtered;
         }
 
-        // Get course progress percentage
         function getCourseProgress(course) {
-            if (!course.modules || course.modules.length === 0) return 0;
+            if (typeof course.progress_percentage === 'number') {
+                return course.progress_percentage;
+            }
             
-            const completedModules = course.modules.filter(m => m.isCompleted || m.is_completed);
-            return Math.round((completedModules.length / course.modules.length) * 100);
+            const modules = course.modules || course.Module || [];
+            if (!modules || modules.length === 0) return 0;
+            
+            const completedModules = modules.filter(m => {
+                return m.isCompleted || m.is_completed || 
+                       (m.ModuleCompletion && m.ModuleCompletion.length > 0) ||
+                       (m.moduleCompletion && m.moduleCompletion.length > 0);
+            });
+            
+            return Math.round((completedModules.length / modules.length) * 100);
         }
 
-        // Display courses in grid
         function displayCourses(courses) {
             const grid = document.getElementById('coursesGrid');
             grid.innerHTML = '';
@@ -267,7 +264,6 @@
             });
         }
 
-        // Create course card element
         function createCourseCard(course) {
             const card = document.createElement('div');
             card.className = 'card course-card overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2';
@@ -275,7 +271,6 @@
             const progress = getCourseProgress(course);
             const buttonText = progress === 0 ? 'Start Learning' : progress === 100 ? 'Review Course' : 'Continue Learning';
             
-            // Create image element with actual thumbnail or gradient fallback
             const createImageElement = (course) => {
                 if (course.thumbnail_image) {
                     return `<img src="${course.thumbnail_image}" 
@@ -321,7 +316,6 @@
             return card;
         }
 
-        // Get status badge
         function getStatusBadge(progress) {
             let badgeClass, badgeText;
             
@@ -339,7 +333,6 @@
             return `<div class="absolute top-2 right-2 badge ${badgeClass} text-xs">${badgeText}</div>`;
         }
 
-        // Update statistics
         function updateStats(courses) {
             const total = courses.length;
             const completed = courses.filter(course => getCourseProgress(course) === 100).length;
@@ -353,7 +346,23 @@
             document.getElementById('inProgressCourses').textContent = inProgress;
         }
 
-        // Update results info
+        function updateProgress(course) {
+            const progress = getCourseProgress(course);
+            
+            const courseCard = document.querySelector(`[data-course-id="${course.id}"]`);
+            if (courseCard) {
+                const progressBar = courseCard.closest('.card').querySelector('.bg-primary');
+                const progressText = courseCard.closest('.card').querySelector('.font-semibold');
+                
+                if (progressBar) {
+                    progressBar.style.width = `${progress}%`;
+                }
+                if (progressText) {
+                    progressText.textContent = `${progress}%`;
+                }
+            }
+        }
+
         function updateResultsInfo(meta) {
             const info = document.getElementById('resultsInfo');
             const total = meta.total || 0;
@@ -367,7 +376,6 @@
             }
         }
 
-        // Update pagination
         function updatePagination(meta) {
             const pagination = document.getElementById('pagination');
             totalPages = meta.totalPages || Math.ceil((meta.total || 0) / currentLimit);
@@ -379,7 +387,6 @@
 
             let paginationHTML = '<div class="flex items-center gap-2">';
             
-            // Previous button
             paginationHTML += `
                 <button onclick="changePage(${currentPage - 1})" 
                         class="btn btn-outline btn-sm ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -388,7 +395,6 @@
                 </button>
             `;
             
-            // Page numbers
             const startPage = Math.max(1, currentPage - 2);
             const endPage = Math.min(totalPages, currentPage + 2);
             
@@ -401,7 +407,6 @@
                 `;
             }
             
-            // Next button
             paginationHTML += `
                 <button onclick="changePage(${currentPage + 1})" 
                         class="btn btn-outline btn-sm ${currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -414,14 +419,12 @@
             pagination.innerHTML = paginationHTML;
         }
 
-        // Change page
         function changePage(page) {
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             loadMyCourses();
         }
 
-        // Search and filter functions
         function performSearch() {
             currentSearch = document.getElementById('searchInput').value.trim();
             currentStatus = document.getElementById('statusFilter').value;
@@ -429,7 +432,6 @@
             loadMyCourses();
         }
 
-        // Continue course (go to modules)
         function continueCourse(courseId) {
             console.log('continueCourse called with courseId:', courseId);
             
@@ -439,24 +441,20 @@
                 return;
             }
             
-            // Add visual feedback
             const button = event.target;
             const originalText = button.textContent;
             button.textContent = 'Loading...';
             button.disabled = true;
             
-            // Small delay to show loading state
             setTimeout(() => {
                 window.location.href = `module.html?courseId=${courseId}`;
             }, 500);
         }
 
-        // View course details
         function viewCourseDetails(courseId) {
             window.location.href = `course-detail.html?id=${courseId}`;
         }
 
-        // Download certificate
         async function downloadCertificate(courseId) {
             try {
                 await api.downloadCertificate(courseId);
@@ -467,22 +465,17 @@
             }
         }
 
-        // Setup event listeners
         function setupEventListeners() {
-            // Search button
             document.getElementById('searchBtn').addEventListener('click', performSearch);
             
-            // Search input
             document.getElementById('searchInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     performSearch();
                 }
             });
             
-            // Status filter change
             document.getElementById('statusFilter').addEventListener('change', performSearch);
 
-            // Debounced search on input
             const searchInput = document.getElementById('searchInput');
             let searchTimeout;
             searchInput.addEventListener('input', () => {
@@ -491,15 +484,12 @@
             });
         }
 
-        // Simple toast notification function
         function showToast(message, type = 'info') {
             console.log(`Toast [${type}]: ${message}`);
             
-            // Create toast element
             const toast = document.createElement('div');
             toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white max-w-sm transform transition-all duration-300 translate-x-full`;
             
-            // Set color based on type
             switch(type) {
                 case 'error':
                     toast.className += ' bg-red-500';
@@ -517,12 +507,10 @@
             toast.textContent = message;
             document.body.appendChild(toast);
             
-            // Animate in
             setTimeout(() => {
                 toast.classList.remove('translate-x-full');
             }, 100);
             
-            // Remove after 3 seconds
             setTimeout(() => {
                 toast.classList.add('translate-x-full');
                 setTimeout(() => {

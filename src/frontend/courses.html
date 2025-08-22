@@ -21,10 +21,10 @@
                         <li><a href="my-courses.html" class="nav-link">My Courses</a></li>
                         <li>
                             <div class="text-sm">
-                                <span id="userGreeting" class="text-muted-foreground">Hello! 👋</span>
                                 <div id="userBalance" class="text-primary font-semibold">Balance: Loading...</div>
                             </div>
                         </li>
+                        <li><a href="profile.html" class="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-full hover:bg-primary/30 transition-colors">👤</a></li>
                         <li><button onclick="logout()" class="btn btn-outline btn-sm">Logout</button></li>
                     </ul>
                 </div>
@@ -65,7 +65,7 @@
                         </select>
                     </div>
                     <div>
-                        <button id="searchBtn" class="btn btn-primary btn-lg w-full">Search</button>
+                        <button id="searchBtn" class="btn btn-primary w-full">Search</button>
                     </div>
                 </div>
                 
@@ -111,19 +111,16 @@
         let currentCategory = '';
         let totalPages = 1;
 
-        // Check authentication
         if (!requireAuth()) {
             throw new Error('Authentication required');
         }
 
-        // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
             await loadUserInfo();
             await loadCourses();
             setupEventListeners();
         });
 
-        // Load user information
         async function loadUserInfo() {
             try {
                 if (!isAuthenticated()) {
@@ -135,25 +132,21 @@
                 const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
                 document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
                 
-                // Display user balance
                 const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 
                 if (error.message === 'Authentication required') {
-                    // Authentication failed - user will be redirected by API service
                     return;
                 }
                 
-                // For other errors, show a generic greeting
                 document.getElementById('userGreeting').textContent = 'Hello! 👋';
                 document.getElementById('userBalance').textContent = 'Balance: --';
                 showToast('Unable to load user profile', 'warning');
             }
         }
 
-        // Load courses
         async function loadCourses() {
             const spinner = document.getElementById('loadingSpinner');
             const grid = document.getElementById('courseGrid');
@@ -193,7 +186,6 @@
                 console.error('Failed to load courses:', error);
                 
                 if (error.message === 'Authentication required') {
-                    // Authentication failed - user will be redirected by API service
                     return;
                 }
                 
@@ -204,7 +196,6 @@
             }
         }
 
-        // Display courses in grid
         function displayCourses(courses) {
             const grid = document.getElementById('courseGrid');
             grid.innerHTML = '';
@@ -215,7 +206,6 @@
             });
         }
 
-        // Create course card element
         function createCourseCard(course) {
             const card = document.createElement('div');
             card.className = 'card overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-xl hover:-translate-y-1';
@@ -223,7 +213,6 @@
             const price = course.price === 0 ? 'Free' : formatCurrency(course.price);
             const isPurchased = course.isPurchased || course.is_purchased;
             
-            // Create image element with proper error handling
             const createImageElement = (course) => {
                 if (course.thumbnail_image) {
                     return `<img src="${course.thumbnail_image}" 
@@ -231,7 +220,6 @@
                                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                  loading="lazy">`;
                 } else {
-                    // Fallback to a simple colored div if no image
                     return `<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
                         <span class="text-primary font-semibold text-4xl">📚</span>
                     </div>`;
@@ -268,7 +256,6 @@
             return card;
         }
 
-        // Update results info
         function updateResultsInfo(meta) {
             const info = document.getElementById('resultsInfo');
             const total = meta.total_items || meta.total || 0;
@@ -280,7 +267,6 @@
             info.classList.remove('hidden');
         }
 
-        // Update pagination
         function updatePagination(meta) {
             const pagination = document.getElementById('pagination');
             totalPages = meta.total_pages || meta.totalPages || Math.ceil((meta.total_items || meta.total || 0) / currentLimit);
@@ -292,7 +278,6 @@
 
             let paginationHTML = '<div class="flex items-center gap-2">';
             
-            // Previous button
             paginationHTML += `
                 <button onclick="changePage(${currentPage - 1})" 
                         class="btn btn-outline btn-sm ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -301,7 +286,6 @@
                 </button>
             `;
             
-            // Page numbers
             const startPage = Math.max(1, currentPage - 2);
             const endPage = Math.min(totalPages, currentPage + 2);
             
@@ -328,7 +312,6 @@
                 paginationHTML += `<button onclick="changePage(${totalPages})" class="btn btn-outline btn-sm">${totalPages}</button>`;
             }
             
-            // Next button
             paginationHTML += `
                 <button onclick="changePage(${currentPage + 1})" 
                         class="btn btn-outline btn-sm ${currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : ''}"
@@ -341,14 +324,12 @@
             pagination.innerHTML = paginationHTML;
         }
 
-        // Change page
         function changePage(page) {
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             loadCourses();
         }
 
-        // Search and filter functions
         function performSearch() {
             currentSearch = document.getElementById('searchInput').value.trim();
             currentCategory = document.getElementById('categoryFilter').value;
@@ -365,34 +346,27 @@
             loadCourses();
         }
 
-        // View course details
         function viewCourse(courseId) {
             window.location.href = `course-detail.html?id=${courseId}`;
         }
 
-        // Setup event listeners
         function setupEventListeners() {
-            // Search button
             document.getElementById('searchBtn').addEventListener('click', performSearch);
             
-            // Enter key in search input
             document.getElementById('searchInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     performSearch();
                 }
             });
             
-            // Category filter change
             document.getElementById('categoryFilter').addEventListener('change', performSearch);
             
-            // Limit change
             document.getElementById('limitSelect').addEventListener('change', (e) => {
                 currentLimit = parseInt(e.target.value);
                 currentPage = 1;
                 loadCourses();
             });
 
-            // Debounced search on input
             const searchInput = document.getElementById('searchInput');
             let searchTimeout;
             searchInput.addEventListener('input', () => {

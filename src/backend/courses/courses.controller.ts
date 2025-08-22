@@ -56,7 +56,7 @@ export class CoursesController {
 
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
-    const userId = req.user?.id; // Optional user ID for purchase status
+    const userId = req.user?.id;
     return this.coursesService.findOne(id, userId);
   }
 

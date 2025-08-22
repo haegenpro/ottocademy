@@ -25,7 +25,6 @@ export class CoursesService {
     
     const where: any = {};
     
-    // Handle search
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' as const } },
@@ -34,7 +33,6 @@ export class CoursesService {
       ];
     }
     
-    // Handle category filter
     if (category) {
       where.category = category;
     }
@@ -56,7 +54,7 @@ export class CoursesService {
 
     const coursesWithModuleCount = courses.map(course => ({
       ...course,
-      price: course.price / 100, // Convert from cents to display units
+      price: course.price / 100,
       total_modules: course.modules.length,
       modules: undefined,
     }));
@@ -86,7 +84,6 @@ export class CoursesService {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
     
-    // Check if user has purchased this course
     let isPurchased = false;
     if (userId) {
       const userCourse = await this.prisma.userCourse.findUnique({
@@ -95,18 +92,16 @@ export class CoursesService {
       isPurchased = !!userCourse;
     }
     
-    // Convert price from cents to display units and add module count and purchase status
     return {
       ...course,
       price: course.price / 100,
       total_modules: course.modules.length,
       isPurchased,
-      is_purchased: isPurchased, // For backward compatibility
+      is_purchased: isPurchased,
     };
   }
 
   async update(id: string, updateCourseDto: UpdateCourseDto, thumbnailPath?: string) {
-    // Check if course exists (without user context)
     const existingCourse = await this.prisma.course.findUnique({ where: { id } });
     if (!existingCourse) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
@@ -123,7 +118,6 @@ export class CoursesService {
       },
     });
 
-    // Convert price back to display units
     return {
       ...updatedCourse,
       price: updatedCourse.price / 100,
@@ -131,7 +125,6 @@ export class CoursesService {
   }
 
   async remove(id: string) {
-    // Check if course exists (without user context)
     const course = await this.prisma.course.findUnique({ where: { id } });
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);

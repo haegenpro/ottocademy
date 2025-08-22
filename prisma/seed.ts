@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Start seeding...');
 
-  // Clear existing data
   console.log('Clearing existing data...');
   await prisma.certificate.deleteMany();
   await prisma.moduleCompletion.deleteMany();
@@ -18,7 +17,6 @@ async function main() {
   // === USERS ===
   console.log('Creating users...');
   
-  // Admin user
   const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.create({
     data: {
@@ -33,7 +31,6 @@ async function main() {
   });
   console.log(`Created admin user: ${admin.email}`);
 
-  // Regular users
   const userPassword = await bcrypt.hash('password123', 10);
   const users = await Promise.all([
     prisma.user.create({
@@ -379,7 +376,6 @@ async function main() {
     ],
   });
 
-  // Add modules for other courses (simplified for brevity)
   const otherCourseModules = [
     // Machine Learning modules
     { courseId: machineLearningCourse.id, count: 6, prefix: 'ml' },
@@ -416,25 +412,21 @@ async function main() {
   console.log('Creating user course purchases...');
   
   const purchases = [
-    // John purchased web development and python
+
     { userId: users[0].id, courseId: webDevCourse.id },
     { userId: users[0].id, courseId: pythonCourse.id },
     
-    // Jane purchased data analytics and machine learning
     { userId: users[1].id, courseId: dataAnalyticsCourse.id },
     { userId: users[1].id, courseId: machineLearningCourse.id },
     { userId: users[1].id, courseId: webDevCourse.id },
     
-    // Alex purchased mobile development and productivity
     { userId: users[2].id, courseId: mobileCourse.id },
     { userId: users[2].id, courseId: productivityCourse.id },
     
-    // Sarah purchased business courses
     { userId: users[3].id, courseId: digitalMarketingCourse.id },
     { userId: users[3].id, courseId: entrepreneurshipCourse.id },
     { userId: users[3].id, courseId: englishCourse.id },
     
-    // Michael purchased photography and productivity
     { userId: users[4].id, courseId: photographyCourse.id },
     { userId: users[4].id, courseId: productivityCourse.id },
   ];
@@ -445,10 +437,8 @@ async function main() {
   // === MODULE COMPLETIONS ===
   console.log('Creating module completions...');
   
-  // Get all modules for purchased courses
   const allModules = await prisma.module.findMany();
   
-  // John completed all modules for web dev course (first 8 modules)
   const johnWebDevModules = allModules.filter(m => m.courseId === webDevCourse.id);
   const johnCompletions = johnWebDevModules.map(module => ({
     userId: users[0].id,
@@ -456,7 +446,6 @@ async function main() {
     isCompleted: true,
   }));
   
-  // Jane completed first 3 modules of data analytics
   const janeDataModules = allModules.filter(m => m.courseId === dataAnalyticsCourse.id).slice(0, 3);
   const janeCompletions = janeDataModules.map(module => ({
     userId: users[1].id,
@@ -464,7 +453,6 @@ async function main() {
     isCompleted: true,
   }));
   
-  // Alex completed first 2 modules of productivity course
   const alexProductivityModules = allModules.filter(m => m.courseId === productivityCourse.id).slice(0, 2);
   const alexCompletions = alexProductivityModules.map(module => ({
     userId: users[2].id,
@@ -480,7 +468,6 @@ async function main() {
   // === CERTIFICATES ===
   console.log('Creating certificates...');
   
-  // John completed web development course, so he gets a certificate
   await prisma.certificate.create({
     data: {
       userId: users[0].id,
