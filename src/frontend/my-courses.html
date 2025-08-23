@@ -131,8 +131,6 @@
                 }
                 
                 const profile = await api.getProfile();
-                const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
-                document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
                 
                 const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
@@ -143,7 +141,6 @@
                     return;
                 }
                 
-                document.getElementById('userGreeting').textContent = 'Hello! 👋';
                 document.getElementById('userBalance').textContent = 'Balance: --';
                 showToast('Unable to load user profile', 'warning');
             }

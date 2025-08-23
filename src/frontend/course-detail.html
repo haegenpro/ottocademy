@@ -154,9 +154,6 @@
                 const profile = await api.getProfile();
                 userInfo = profile;
                 
-                const displayName = profile.firstName ? `${profile.firstName} ${profile.lastName}` : profile.username;
-                document.getElementById('userGreeting').textContent = `Hello, ${displayName}! 👋`;
-                
                 const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
@@ -165,8 +162,6 @@
                 if (error.message === 'Authentication required') {
                     return;
                 }
-                
-                document.getElementById('userGreeting').textContent = 'Hello! 👋';
                 document.getElementById('userBalance').textContent = 'Balance: --';
                 showToast('Unable to load user profile', 'warning');
             }
