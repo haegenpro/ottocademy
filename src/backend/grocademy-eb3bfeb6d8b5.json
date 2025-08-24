@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "grocademy",
+  "private_key_id": "eb3bfeb6d8b56ad2890be36affa2e836a2f59fa7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQClrIwcOPi9Dx/j\nNQqmh4kfjNspgvSfu663Vn317J67feBpI4VPTF3FM5YFtriSUyfrrewO7mYZ0k7v\nT7qd/uBvJjwkJgFn4JMzCZYCQIRB3d799nEyZBmYIJnLVY6+8cZsV9ziHDOXVG9n\noljhg7oqmcVi8FrgYDcphCo/knCnrYrtzTMsQqg2FVszWN4lsYFnFE8cWy16y00L\npobIx7PeqydDpiwA+JmMSfho3y2zfKmyfYnlfvukrwazK4EXCzTVz1//yCUP+aw0\nJ5tv0vO+bzVS4p7z11dHecuQff5gaSXEiMAfvNHudhdVQsE927WQs9N/fRmeYspl\nYDFl3C81AgMBAAECggEADXokGq6iw2Rt1GKN936Kj9O6R131DuJqY9UoIX+KaRek\nEAF4+HqunRplb5kN2i9kDbbD/3HywdJ7I9oRRQWFFd2fIlSqJBxfdRUoTA4aBC6r\nk26/BhmhAGBUincvCcbqvIkIOaeQJdUTS/Ontc6ssAb6yOHjDqIdEqZC9pFv0x/4\nEyt+dMo85RFYvWFjSM+TGjgCCYZKLXdqGDvhD6pMpbTdcPiDLlvFxKpc/EL85Kdd\nCveZI8pYG8FxHcMPnmDEW2okWx5+f5aUvSBMnpNIA+eMrru3bU+2sqRHw24p/6BR\ne8qA5rLtFcTo1aBvP2rnPMkud2Lda+BBybgeG7zziQKBgQDe2pNAMuOdnHQ7TD4Y\nKc8ePv7iS3uMzRfJzSIFBxfadWVUP5GiepYr2h2OSKnScxKzivP2zu9SCj5m2AzU\nJc2rd499bFpmfjEUX3IVmdOHWmG5h25e9KUJYBwjWKEf6cffC8HsYGoy2FmOo/Q4\naVZ2z9n0sjlrvP8UI731e+BrvQKBgQC+UMh5iHU0h6KAnRbsiI/iHbflb/30K7vp\nu64EVFfHpN0KTi/4/qM/a79nnF/ML1fJ/D3hPncthJztil4ma7So63X0BKbw7Njq\nb+2JcX/PKA/nguDrtenCcLNW0PlcCuJ6/ziGvVOFKKvE2KtTI+mJb/q3DRC9lT9I\nJogbrSQM2QKBgGI8JXbCN/WtFstg02phW6xwhniIX4D0k0zggOOIeepRn4Ygs3jU\n4seX0Tl8LGfZU+ATG3GrTHF0lIdPK3CE7YFtJbJbBgpyC/54CFkfQtBCdhuLaIqw\n+uMEG8M0+WmQ6wsWKrig049wMSIggbIwNO4Qt3oW6hrk5+gfzUeeAJJdAoGALYQw\njjB+p5OQ3+WyJ9v5XYDyDGOefxk+lgYW9l4dqFfbra1Jd+merXpdirAxkSn5ewti\n2U4RPseqqH0hS1sTGBtIWJYMPy7GKjueufJ1ONxCAYKhvH4DbEd7/NV57fOEexoz\nMLZzFTPG8QtI3leGcSJg+gqb6FubiOv+PXBJYPECgYEAn62Lxw5Ob4UEXo4OJ2sL\nZaeXzhTqUGxXo79vkTBypPVed5GmOSwRnVMpN19ndtxxxlFAA+hT0vt2AW5RqqJB\n7jTwbdVLVeRaQkh8Emcqxwxunr3jSy7sgQMXfqCs5gLxYByMAVwiDe/V4YgaQfjp\nFZcHiWhlPc+Gk83HUKFdIxM=\n-----END PRIVATE KEY-----\n",
+  "client_email": "storage-admin@grocademy.iam.gserviceaccount.com",
+  "client_id": "111844109202513430687",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/storage-admin%40grocademy.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

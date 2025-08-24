@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import * as fs from 'fs/promises';
+import { deleteFileFromGCS } from '../gcs.helper';
 
 @Injectable()
 export class CoursesService {
@@ -155,11 +155,7 @@ export class CoursesService {
     });
 
     if (course.thumbnail_image) {
-      try {
-        await fs.unlink(course.thumbnail_image);
-      } catch (error) {
-        console.log(`Thumbnail file not found for course ${id}, skipping deletion`);
-      }
+      await deleteFileFromGCS(course.thumbnail_image); // Use the GCS helper
     }
 
     return { message: `Course with ID "${id}" deleted successfully.` };
@@ -296,13 +292,16 @@ export class CoursesService {
     };
   }
 
-  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15) {
-    const userCourse = await this.prisma.userCourse.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-    });
+  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15, isAdmin: boolean = false) {
+    // Check if user has purchased the course or is an admin
+    if (!isAdmin) {
+      const userCourse = await this.prisma.userCourse.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+      });
 
-    if (!userCourse) {
-      throw new ForbiddenException('You have not purchased this course.');
+      if (!userCourse) {
+        throw new ForbiddenException('You have not purchased this course.');
+      }
     }
 
     const skip = (page - 1) * limit;

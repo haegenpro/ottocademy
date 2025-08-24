@@ -35,14 +35,16 @@ export class ModulesController {
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
     const userId = req.user.id;
-    return this.modulesService.findOne(id, userId);
+    const isAdmin = req.user.isAdmin || false;
+    return this.modulesService.findOne(id, userId, isAdmin);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/complete')
   completeModule(@Param('id') moduleId: string, @Request() req) {
     const userId = req.user.id;
-    return this.modulesService.complete(moduleId, userId);
+    const isAdmin = req.user.isAdmin || false;
+    return this.modulesService.complete(moduleId, userId, isAdmin);
   }
 
   @UseGuards(AdminGuard)

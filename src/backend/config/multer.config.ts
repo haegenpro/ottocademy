@@ -1,43 +1,35 @@
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import MulterGoogleCloudStorage from 'multer-cloud-storage';
+import { extname } from 'path';
 
 export const multerConfig: MulterOptions = {
-  storage: diskStorage({
-    destination: (req, file, cb) => {
-      let uploadPath = '';
-      
-      // Determine upload path based on file type and field name
-      if (file.fieldname === 'thumbnail_image') {
-        uploadPath = './public/uploads/courses';
-      } else if (file.fieldname === 'pdf_content') {
-        uploadPath = './public/uploads/modules/pdf';
-      } else if (file.fieldname === 'video_content') {
-        uploadPath = './public/uploads/modules/video';
-      } else {
-        uploadPath = './public/uploads';
-      }
-
-      // Create directory if it doesn't exist
-      if (!existsSync(uploadPath)) {
-        mkdirSync(uploadPath, { recursive: true });
-      }
-
-      cb(null, uploadPath);
-    },
+  storage: new MulterGoogleCloudStorage({
+    bucket: process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    keyFilename: process.env.GOOGLE_CLOUD_KEYFILE,
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const extension = extname(file.originalname);
       const baseName = file.originalname.replace(extension, '').replace(/[^a-zA-Z0-9]/g, '-');
-      cb(null, `${baseName}-${uniqueSuffix}${extension}`);
+      
+      let folder = 'others/';
+      if (file.fieldname === 'thumbnail_image') {
+        folder = 'courses/';
+      } else if (file.fieldname === 'pdf_content') {
+        folder = 'modules/pdf/';
+      } else if (file.fieldname === 'video_content') {
+        folder = 'modules/video/';
+      }
+
+      cb(null, `${folder}${baseName}-${uniqueSuffix}${extension}`);
     },
   }),
   fileFilter: (req, file, cb) => {
+    // Your existing fileFilter logic can remain the same
     const allowedMimes = {
       'thumbnail_image': ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
       'pdf_content': ['application/pdf'],
-      'video_content': ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm', 'video/x-msvideo']
+      'video_content': ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm']
     };
 
     const fieldMimes = allowedMimes[file.fieldname as keyof typeof allowedMimes];
@@ -45,7 +37,7 @@ export const multerConfig: MulterOptions = {
     if (fieldMimes && fieldMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error(`Invalid file type for ${file.fieldname}. Allowed types: ${fieldMimes?.join(', ')}`), false);
+      cb(new Error(`Invalid file type for ${file.fieldname}.`), false);
     }
   },
   limits: {

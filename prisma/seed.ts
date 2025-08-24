@@ -110,7 +110,7 @@ async function main() {
       price: 8999,
       topics: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'MongoDB', 'Express', 'Full-Stack'],
       category: 'COMPUTER_SCIENCE',
-      thumbnail_image: 'uploads/courses/web-dev-bootcamp.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -122,7 +122,7 @@ async function main() {
       price: 6999,
       topics: ['Python', 'OOP', 'Data Structures', 'Algorithms', 'Web Scraping', 'Automation'],
       category: 'COMPUTER_SCIENCE',
-      thumbnail_image: 'uploads/courses/python-masterclass.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -134,7 +134,7 @@ async function main() {
       price: 7999,
       topics: ['React Native', 'Mobile Development', 'Redux', 'Navigation', 'API Integration'],
       category: 'COMPUTER_SCIENCE',
-      thumbnail_image: 'uploads/courses/react-native-course.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -147,7 +147,7 @@ async function main() {
       price: 7499,
       topics: ['Python', 'SQL', 'Pandas', 'NumPy', 'Data Visualization', 'Statistics'],
       category: 'DATA_SCIENCE',
-      thumbnail_image: 'uploads/courses/data-analytics.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -159,7 +159,7 @@ async function main() {
       price: 9999,
       topics: ['Machine Learning', 'Deep Learning', 'Neural Networks', 'TensorFlow', 'Scikit-learn'],
       category: 'ARTIFICIAL_INTELLIGENCE',
-      thumbnail_image: 'uploads/courses/machine-learning-az.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -172,7 +172,7 @@ async function main() {
       price: 5999,
       topics: ['SEO', 'SEM', 'Social Media', 'Content Marketing', 'Email Marketing', 'Analytics'],
       category: 'BUSINESS',
-      thumbnail_image: 'uploads/courses/digital-marketing.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -184,7 +184,7 @@ async function main() {
       price: 8499,
       topics: ['Startup', 'Business Model', 'Funding', 'Leadership', 'Innovation', 'Strategy'],
       category: 'BUSINESS',
-      thumbnail_image: 'uploads/courses/entrepreneurship.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -197,7 +197,7 @@ async function main() {
       price: 3999,
       topics: ['Time Management', 'Productivity', 'Goal Setting', 'Habits', 'Focus', 'Organization'],
       category: 'PERSONAL_DEVELOPMENT',
-      thumbnail_image: 'uploads/courses/productivity.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -210,7 +210,7 @@ async function main() {
       price: 4999,
       topics: ['Business English', 'Communication', 'Presentations', 'Meetings', 'Writing', 'Speaking'],
       category: 'LANGUAGE',
-      thumbnail_image: 'uploads/courses/business-english.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -223,7 +223,7 @@ async function main() {
       price: 5499,
       topics: ['Photography', 'Composition', 'Lighting', 'Camera Settings', 'Photo Editing', 'Lightroom'],
       category: 'ARTS',
-      thumbnail_image: 'uploads/courses/photography.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -500,6 +500,7 @@ async function main() {
   console.log(`✅ Module completions and 1 certificate`);
   console.log('\n🔑 Admin Login: admin@grocademy.com / admin123');
   console.log('🔑 User Login: john.doe@email.com / password123 (or any other user)');
+  console.log('� Note: Course thumbnails and module content should be uploaded via the admin panel');
 }
 
 main()

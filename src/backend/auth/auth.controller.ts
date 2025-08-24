@@ -57,19 +57,28 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('self')
   async getSelf(@Request() req) {
-    const profile = await this.authService.getProfile(req.user.id);
-    return {
-      status: 'success',
-      message: 'Profile retrieved successfully',
-      data: {
-        id: profile.id,
-        username: profile.username,
-        email: profile.email,
-        first_name: profile.firstName,
-        last_name: profile.lastName,
-        balance: profile.balance,
-      },
-    };
+    try {
+      const profile = await this.authService.getProfile(req.user.id);
+      return {
+        status: 'success',
+        message: 'Profile retrieved successfully',
+        data: {
+          id: profile.id,
+          username: profile.username,
+          email: profile.email,
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          balance: profile.balance,
+          isAdmin: profile.isAdmin,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to retrieve profile',
+        data: null,
+      };
+    }
   }
 
   @Get('debug/env')
@@ -80,6 +89,21 @@ export class AuthController {
       hasGoogleCallbackUrl: !!process.env.GOOGLE_CALLBACK_URL,
       googleClientId: process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' ? 'PLACEHOLDER' : 'CONFIGURED',
       callbackUrl: process.env.GOOGLE_CALLBACK_URL
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('debug/token')
+  debugToken(@Request() req) {
+    return {
+      status: 'success',
+      message: 'Token is valid',
+      data: {
+        userId: req.user.id,
+        username: req.user.username,
+        isAdmin: req.user.isAdmin,
+        tokenValidated: true,
+      },
     };
   }
 
