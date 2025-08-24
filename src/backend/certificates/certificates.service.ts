@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import * as puppeteer from 'puppeteer';
 
 @Injectable()
 export class CertificatesService {
@@ -72,13 +71,13 @@ export class CertificatesService {
   async downloadCertificate(courseId: string, userId: string) {
     const certificate = await this.getCertificate(courseId, userId);
     
-    // Generate PDF if not exists or regenerate
-    const pdfBuffer = await this.generateCertificatePDF(certificate);
+    // Generate HTML certificate
+    const htmlContent = this.generateCertificateHTML(certificate);
     
     return {
-      buffer: pdfBuffer,
-      filename: `certificate-${courseId}-${userId}.pdf`,
-      mimeType: 'application/pdf',
+      html: htmlContent,
+      filename: `certificate-${courseId}-${userId}.html`,
+      mimeType: 'text/html',
     };
   }
 
@@ -98,40 +97,6 @@ export class CertificatesService {
     return certificate;
   }
 
-  private async generateCertificatePDF(certificate: any): Promise<Buffer> {
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
-    try {
-      const page = await browser.newPage();
-      
-      // Set page size to A4 landscape
-      await page.setViewport({ width: 1123, height: 794 });
-      
-      const html = this.generateCertificateHTML(certificate);
-      
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdf = await page.pdf({
-        format: 'A4',
-        landscape: true,
-        printBackground: true,
-        margin: {
-          top: '20px',
-          bottom: '20px',
-          left: '20px',
-          right: '20px',
-        },
-      });
-
-      return Buffer.from(pdf);
-    } finally {
-      await browser.close();
-    }
-  }
-
   private generateCertificateHTML(certificate: any): string {
     const issuedDate = new Date(certificate.finishDate).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -144,7 +109,13 @@ export class CertificatesService {
       <html>
       <head>
         <meta charset="UTF-8">
+        <title>Certificate - ${certificate.user.firstName} ${certificate.user.lastName}</title>
         <style>
+          @media print {
+            .no-print { display: none !important; }
+            body { margin: 0; }
+          }
+          
           body {
             font-family: 'Georgia', serif;
             margin: 0;
@@ -155,16 +126,36 @@ export class CertificatesService {
             align-items: center;
             min-height: 100vh;
           }
+          
+          .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 1000;
+          }
+          
+          .print-button:hover {
+            background: #c0392b;
+          }
+          
           .certificate {
             background: white;
             width: 800px;
             height: 600px;
             padding: 60px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border: 8px solid #gold;
-            border-image: linear-gradient(45deg, #FFD700, #FFA500, #FF6347) 1;
+            border: 8px solid #FFD700;
             text-align: center;
             position: relative;
+            page-break-inside: avoid;
           }
           .certificate::before {
             content: '';
@@ -202,6 +193,14 @@ export class CertificatesService {
             margin-bottom: 30px;
             font-weight: bold;
           }
+          
+          .username {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+          }
+          
           .course {
             font-size: 24px;
             color: #2c3e50;
@@ -248,8 +247,15 @@ export class CertificatesService {
             font-weight: bold;
           }
         </style>
+        <script>
+          function printCertificate() {
+            window.print();
+          }
+        </script>
       </head>
       <body>
+        <button class="print-button no-print" onclick="printCertificate()">🖨️ Print Certificate</button>
+        
         <div class="certificate">
           <div class="header">
             <div class="logo">🍌</div>
@@ -259,6 +265,10 @@ export class CertificatesService {
           
           <div class="recipient">
             ${certificate.user.firstName} ${certificate.user.lastName}
+          </div>
+          
+          <div class="username">
+            (@${certificate.user.username})
           </div>
           
           <div class="completion-text">
@@ -276,12 +286,12 @@ export class CertificatesService {
           <div class="signature-section">
             <div class="signature">
               <div class="signature-line"></div>
-              <div>Grocademy</div>
-              <div class="date">Platform</div>
+              <div>Grocademy Platform</div>
+              <div class="date">Learning Platform</div>
             </div>
             <div class="signature">
               <div class="signature-line"></div>
-              <div>Date Issued</div>
+              <div>Date Completed</div>
               <div class="date">${issuedDate}</div>
             </div>
           </div>

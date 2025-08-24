@@ -258,10 +258,12 @@
                             class="btn btn-primary w-full btn-lg transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95 shadow-lg">
                         📚 Start Learning
                     </button>
-                    <button onclick="downloadCertificate()" id="certificateBtn" class="btn btn-secondary w-full hidden">
+                    <button onclick="downloadCertificate()" id="certificateBtn" class="btn btn-secondary w-full mt-3">
                         📜 Download Certificate
                     </button>
                 `;
+                
+                checkCourseCompletion(course.id);
             } else {
                 container.innerHTML = `
                     <div class="space-y-3">
@@ -272,6 +274,27 @@
                         </button>
                     </div>
                 `;
+            }
+        }
+
+        async function checkCourseCompletion(courseId) {
+            try {
+                const certificateResponse = await api.getCertificate(courseId);
+                if (certificateResponse) {
+                    const container = document.getElementById('actionButtons');
+                    container.innerHTML = `
+                        <button onclick="downloadCertificate()" 
+                                class="btn btn-primary w-full btn-lg transition-all duration-200 hover:bg-primary/80 hover:scale-105 active:scale-95 shadow-lg">
+                            📜 Download Certificate
+                        </button>
+                        <button onclick="goToModules()" 
+                                class="btn btn-secondary w-full btn-lg mt-3 transition-all duration-200 hover:bg-secondary/80">
+                            📚 Continue Learning
+                        </button>
+                    `;
+                }
+            } catch (error) {
+                console.log('Course not completed yet');
             }
         }
 

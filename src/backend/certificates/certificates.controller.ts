@@ -5,7 +5,6 @@ import {
   UseGuards,
   Req,
   Res,
-  StreamableFile,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CertificatesService } from './certificates.service';
@@ -18,7 +17,7 @@ export class CertificatesController {
 
   @Get('course/:courseId')
   async getCertificate(@Param('courseId') courseId: string, @Req() req: any) {
-    return this.certificatesService.getCertificate(courseId, req.user.userId);
+    return this.certificatesService.getCertificate(courseId, req.user.id);
   }
 
   @Get('course/:courseId/download')
@@ -27,16 +26,16 @@ export class CertificatesController {
     @Req() req: any,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { buffer, filename, mimeType } = await this.certificatesService.downloadCertificate(
+    const { html, filename, mimeType } = await this.certificatesService.downloadCertificate(
       courseId,
-      req.user.userId,
+      req.user.id,
     );
 
     res.set({
       'Content-Type': mimeType,
-      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Disposition': `inline; filename="${filename}"`,
     });
 
-    return new StreamableFile(buffer);
+    return html;
   }
 }
