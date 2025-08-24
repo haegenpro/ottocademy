@@ -11,13 +11,47 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() registerUserDto: RegisterUserDto) {
-    return this.authService.register(registerUserDto);
+  async register(@Body() registerUserDto: RegisterUserDto) {
+    try {
+      const user = await this.authService.register(registerUserDto);
+      return {
+        status: 'success',
+        message: 'Registration successful',
+        data: {
+          id: user.id,
+          username: user.username,
+          first_name: user.firstName,
+          last_name: user.lastName,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Registration failed',
+        data: null,
+      };
+    }
   }
 
   @Post('login')
-  login(@Body() loginUserDto: LoginUserDto) {
-    return this.authService.login(loginUserDto);
+  async login(@Body() loginUserDto: LoginUserDto) {
+    try {
+      const result = await this.authService.login(loginUserDto);
+      return {
+        status: 'success',
+        message: 'Login successful',
+        data: {
+          username: result.user.username,
+          token: result.access_token,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Login failed',
+        data: null,
+      };
+    }
   }
 
   @UseGuards(JwtAuthGuard)

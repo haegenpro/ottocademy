@@ -10,7 +10,10 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  HttpCode,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ModulesService } from './modules.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -48,17 +51,42 @@ export class ModulesController {
       { name: 'pdf_content', maxCount: 1 },
       { name: 'video_content', maxCount: 1 },
   ]))
-  update(
+  async update(
       @Param('id') id: string,
       @Body() updateModuleDto: UpdateModuleDto,
       @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
   ) {
-      return this.modulesService.update(id, updateModuleDto, files);
+      try {
+        const module = await this.modulesService.update(id, updateModuleDto, files);
+        return {
+          status: 'success',
+          message: 'Module updated successfully',
+          data: {
+            id: module.id,
+            course_id: module.courseId,
+            title: module.title,
+            description: module.description,
+            order: module.order,
+            pdf_content: module.pdf_content,
+            video_content: module.video_content,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        };
+      } catch (error) {
+        return {
+          status: 'error',
+          message: error.message || 'Failed to update module',
+          data: null,
+        };
+      }
   }
 
   @UseGuards(AdminGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-      return this.modulesService.remove(id);
+  @HttpCode(204)
+  async remove(@Param('id') id: string, @Res() res: Response) {
+    await this.modulesService.remove(id);
+    res.status(204).send();
   }
 }

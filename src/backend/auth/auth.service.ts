@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,7 +13,12 @@ export class AuthService {
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
-    const { email, username, password, firstName, lastName } = registerUserDto;
+    const { email, username, password, confirm_password, first_name, last_name } = registerUserDto;
+
+    // Check if passwords match
+    if (password !== confirm_password) {
+      throw new BadRequestException('Passwords do not match.');
+    }
 
     const existingUser = await this.prisma.user.findFirst({
       where: { OR: [{ email }, { username }] },
@@ -30,8 +35,8 @@ export class AuthService {
         email,
         username,
         password: hashedPassword,
-        firstName,
-        lastName,
+        firstName: first_name,
+        lastName: last_name,
       },
     });
 

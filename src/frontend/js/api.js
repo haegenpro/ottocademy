@@ -102,7 +102,11 @@ class ApiService {
             body: JSON.stringify({ identifier: email, password })
         });
         
-        if (response.access_token) {
+        // Handle new response format
+        if (response.status === 'success' && response.data && response.data.token) {
+            this.setToken(response.data.token);
+        } else if (response.access_token) {
+            // Fallback for old format
             this.setToken(response.access_token);
         }
         
@@ -116,8 +120,9 @@ class ApiService {
                 username: userData.username,
                 email: userData.email,
                 password: userData.password,
-                firstName: userData.firstName,
-                lastName: userData.lastName
+                confirm_password: userData.confirmPassword,
+                first_name: userData.firstName,
+                last_name: userData.lastName
             })
         });
     }
@@ -199,6 +204,48 @@ class ApiService {
 
     async getHomepageStatistics() {
         return await this.request('/statistics/homepage');
+    }
+
+    // Admin User Management Functions
+    async getUsers(page = 1, limit = 10, search = '') {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            limit: limit.toString()
+        });
+        
+        if (search) params.append('q', search);
+        
+        return await this.request(`/users?${params}`);
+    }
+
+    async getUser(id) {
+        return await this.request(`/users/${id}`);
+    }
+
+    async updateUser(id, userData) {
+        return await this.request(`/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                email: userData.email,
+                username: userData.username,
+                first_name: userData.firstName,
+                last_name: userData.lastName,
+                password: userData.password
+            })
+        });
+    }
+
+    async deleteUser(id) {
+        return await this.request(`/users/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async addUserBalance(id, increment) {
+        return await this.request(`/users/${id}/balance`, {
+            method: 'POST',
+            body: JSON.stringify({ increment })
+        });
     }
 }
 

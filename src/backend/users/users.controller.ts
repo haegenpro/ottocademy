@@ -9,7 +9,10 @@ import {
   Post,
   Query,
   Request,
+  HttpCode,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -22,35 +25,88 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll(
+  async findAll(
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
-    @Query('search') search?: string,
+    @Query('q') search?: string,
   ) {
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 10;
-    return this.usersService.findAll(pageNum, limitNum, search);
+    try {
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      return await this.usersService.findAll(pageNum, limitNum, search);
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to retrieve users',
+        data: null,
+      };
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const user = await this.usersService.findOne(id);
+      return {
+        status: 'success',
+        message: 'User retrieved successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to retrieve user',
+        data: null,
+      };
+    }
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req) {
+    try {
+      const user = await this.usersService.update(id, updateUserDto, req.user.id);
+      return {
+        status: 'success',
+        message: 'User updated successfully',
+        data: user,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to update user',
+        data: null,
+      };
+    }
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Request() req) {
+  @HttpCode(204)
+  async remove(@Param('id') id: string, @Request() req, @Res() res: Response) {
     // Get the admin user ID from the JWT token
     const adminUserId = req.user.id;
-    return this.usersService.remove(id, adminUserId);
+    await this.usersService.remove(id, adminUserId);
+    res.status(204).send();
   }
 
   @Post(':id/balance')
-  addBalance(@Param('id') id: string, @Body() addBalanceDto: AddBalanceDto) {
-    return this.usersService.addBalance(id, addBalanceDto);
+  async addBalance(@Param('id') id: string, @Body() addBalanceDto: AddBalanceDto, @Request() req) {
+    try {
+      const user = await this.usersService.addBalance(id, addBalanceDto.increment, req.user.id);
+      return {
+        status: 'success',
+        message: 'Balance updated successfully',
+        data: {
+          id: user.id,
+          username: user.username,
+          balance: user.balance,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to update balance',
+        data: null,
+      };
+    }
   }
 }

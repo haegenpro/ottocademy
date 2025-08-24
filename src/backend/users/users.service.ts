@@ -31,24 +31,28 @@ export class UsersService {
           firstName: true,
           lastName: true,
           balance: true,
-          isAdmin: true,
-          googleId: true,
-          picture: true,
         },
       }),
       this.prisma.user.count({ where }),
     ]);
 
+    const transformedUsers = users.map(user => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      balance: user.balance,
+    }));
+
     return {
       status: 'success',
-      data: {
-        users,
-        pagination: {
-          current_page: page,
-          per_page: limit,
-          total,
-          total_pages: Math.ceil(total / limit),
-        },
+      message: 'Users retrieved successfully',
+      data: transformedUsers,
+      pagination: {
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
+        total_items: total,
       },
     };
   }
@@ -56,52 +60,96 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        firstName: true,
-        lastName: true,
-        balance: true,
-        isAdmin: true,
+      include: {
+        purchasedCourses: true,
       },
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
-    return user;
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      balance: user.balance,
+      courses_purchased: user.purchasedCourses.length,
+    };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findOne(id);
+  async update(id: string, updateUserDto: UpdateUserDto, adminUserId: string) {
+    if (id === adminUserId) {
+      throw new ForbiddenException('Admin cannot modify their own account');
+    }
+
+    const user = await this.prisma.user.findUnique({ 
+      where: { id },
+      select: { id: true, isAdmin: true },
+    });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isAdmin) {
+      throw new ForbiddenException('Cannot modify admin accounts');
+    }
+
+    const updateData: any = { ...updateUserDto };
+    
+    // Map frontend field names to database field names
+    if (updateUserDto.first_name) {
+      updateData.firstName = updateUserDto.first_name;
+      delete updateData.first_name;
+    }
+    if (updateUserDto.last_name) {
+      updateData.lastName = updateUserDto.last_name;
+      delete updateData.last_name;
+    }
+    
+    if (updateUserDto.password) {
+      const bcrypt = await import('bcrypt');
+      updateData.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: updateData,
       select: {
         id: true,
-        email: true,
         username: true,
         firstName: true,
         lastName: true,
         balance: true,
-        isAdmin: true,
       },
     });
-    return updatedUser;
+
+    return {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      first_name: updatedUser.firstName,
+      last_name: updatedUser.lastName,
+      balance: updatedUser.balance,
+    };
   }
 
   async remove(id: string, adminUserId: string) {
-    const userToDelete = await this.findOne(id);
-    const adminUser = await this.findOne(adminUserId);
+    const userToDelete = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, isAdmin: true },
+    });
 
-    // Prevent admin from deleting themselves
+    if (!userToDelete) {
+      throw new NotFoundException(`User with ID "${id}" not found`);
+    }
+
     if (id === adminUserId) {
       throw new ForbiddenException('You cannot delete your own account');
     }
 
-    // Prevent deletion of other admin users (optional - you can remove this if admins should be able to delete each other)
     if (userToDelete.isAdmin) {
       throw new ForbiddenException('Cannot delete another admin user');
     }
@@ -116,20 +164,19 @@ export class UsersService {
     };
   }
 
-  async addBalance(id: string, addBalanceDto: AddBalanceDto) {
+  async addBalance(id: string, increment: number, adminUserId: string) {
     await this.findOne(id);
-
-    const { amount } = addBalanceDto;
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
         balance: {
-          increment: amount,
+          increment: increment,
         },
       },
       select: {
         id: true,
+        username: true,
         balance: true,
       },
     });

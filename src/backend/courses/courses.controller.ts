@@ -1,7 +1,9 @@
 import {
   Controller, Post, Body, UseGuards, UseInterceptors,
-  UploadedFile, Get, Param, Put, Delete, Request, UploadedFiles, Query
+  UploadedFile, Get, Param, Put, Delete, Request, UploadedFiles, Query,
+  HttpCode, Res, Patch
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CoursesService } from './courses.service';
 import { AdminGuard } from '../auth/guards/admin.guard';
@@ -22,23 +24,50 @@ export class CoursesController {
   @UseGuards(AdminGuard)
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail_image'))
-  create(
+  async create(
     @Body() createCourseDto: CreateCourseDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.coursesService.create(createCourseDto, file?.path);
+    try {
+      const course = await this.coursesService.create(createCourseDto, file?.path);
+      return {
+        status: 'success',
+        message: 'Course created successfully',
+        data: course,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to create course',
+        data: null,
+      };
+    }
   }
 
   @Get()
-  findAll(
+  async findAll(
     @Query('q') search?: string,
     @Query('category') category?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const pageNumber = page ? parseInt(page, 10) : 1;
-    const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.findAll(search, pageNumber, limitNumber, category);
+    try {
+      const pageNumber = page ? parseInt(page, 10) : 1;
+      const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
+      const result = await this.coursesService.findAll(search, pageNumber, limitNumber, category);
+      return {
+        status: 'success',
+        message: 'Courses retrieved successfully',
+        data: result.data,
+        pagination: result.pagination,
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to retrieve courses',
+        data: null,
+      };
+    }
   }
 
   @Get('my-courses')
@@ -73,8 +102,10 @@ export class CoursesController {
 
   @UseGuards(AdminGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.coursesService.remove(id);
+  @HttpCode(204)
+  async remove(@Param('id') id: string, @Res() res: Response) {
+    await this.coursesService.remove(id);
+    res.status(204).send();
   }
 
   @Post(':id/buy')
@@ -102,11 +133,58 @@ export class CoursesController {
     { name: 'pdf_content', maxCount: 1 },
     { name: 'video_content', maxCount: 1 },
   ]))
-  createModule(
+  async createModule(
     @Param('courseId') courseId: string,
     @Body() createModuleDto: CreateModuleDto,
     @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
   ) {
-    return this.modulesService.create(courseId, createModuleDto, files);
+    try {
+      const module = await this.modulesService.create(courseId, createModuleDto, files);
+      return {
+        status: 'success',
+        message: 'Module created successfully',
+        data: {
+          id: module.id,
+          course_id: module.courseId,
+          title: module.title,
+          description: module.description,
+          order: module.order,
+          pdf_content: module.pdf_content,
+          video_content: module.video_content,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to create module',
+        data: null,
+      };
+    }
+  }
+
+  @UseGuards(AdminGuard)
+  @Patch(':courseId/modules/reorder')
+  async reorderModules(
+    @Param('courseId') courseId: string,
+    @Body() reorderDto: { module_order: { id: string; order: number }[] },
+  ) {
+    try {
+      const result = await this.modulesService.reorderModules(courseId, reorderDto.module_order);
+      return {
+        status: 'success',
+        message: 'Modules reordered successfully',
+        data: {
+          module_order: result,
+        },
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error.message || 'Failed to reorder modules',
+        data: null,
+      };
+    }
   }
 }

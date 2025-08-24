@@ -16,9 +16,13 @@ export class RegisterUserDto {
 
   @IsNotEmpty()
   @IsString()
-  firstName: string;
+  confirm_password: string;
 
   @IsNotEmpty()
   @IsString()
-  lastName: string;
+  first_name: string;
+
+  @IsNotEmpty()
+  @IsString()
+  last_name: string;
 }

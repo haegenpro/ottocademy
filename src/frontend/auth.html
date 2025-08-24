@@ -237,9 +237,13 @@
             setLoading('login', true);
             clearMessages();
             try {
-                await api.login(email, password);
-                showMessage('Login successful! Redirecting...', 'success');
-                setTimeout(() => { window.location.href = 'courses.html'; }, 1000);
+                const response = await api.login(email, password);
+                if (response.status === 'success' || response.access_token) {
+                    showMessage('Login successful! Redirecting...', 'success');
+                    setTimeout(() => { window.location.href = 'courses.html'; }, 1000);
+                } else {
+                    throw new Error(response.message || 'Login failed');
+                }
             } catch (error) {
                 showMessage(error.message || 'Login failed. Please check your credentials.', 'error');
             } finally {
@@ -255,6 +259,7 @@
                 username: document.getElementById('registerUsername').value.trim(),
                 email: document.getElementById('registerEmail').value.trim(),
                 password: document.getElementById('registerPassword').value,
+                confirmPassword: document.getElementById('registerPassword').value, // Add confirm password
             };
 
             if (Object.values(userData).some(field => !field)) {
@@ -266,12 +271,16 @@
             clearMessages();
 
             try {
-                await api.register(userData);
-                showMessage('Registration successful! You can now login.', 'success');
-                setTimeout(() => {
-                    switchTab('login');
-                    document.getElementById('loginEmail').value = userData.email;
-                }, 1500);
+                const response = await api.register(userData);
+                if (response.status === 'success') {
+                    showMessage('Registration successful! You can now login.', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginEmail').value = userData.email;
+                    }, 1500);
+                } else {
+                    throw new Error(response.message || 'Registration failed');
+                }
             } catch (error) {
                 showMessage(error.message || 'Registration failed. Please try again.', 'error');
             } finally {
