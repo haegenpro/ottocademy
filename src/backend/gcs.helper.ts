@@ -1,6 +1,5 @@
 import { Storage } from '@google-cloud/storage';
 
-// Lazy initialization function for storage
 const getStorage = () => {
   if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_CLOUD_KEYFILE || !process.env.GOOGLE_CLOUD_STORAGE_BUCKET) {
     console.warn('Google Cloud Storage not configured. File operations will be skipped.');

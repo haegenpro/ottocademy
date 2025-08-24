@@ -125,7 +125,12 @@ export class CoursesService {
   }
 
   async remove(id: string) {
-    const course = await this.prisma.course.findUnique({ where: { id } });
+    const course = await this.prisma.course.findUnique({ 
+      where: { id },
+      include: {
+        modules: true,
+      },
+    });
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
@@ -155,7 +160,16 @@ export class CoursesService {
     });
 
     if (course.thumbnail_image) {
-      await deleteFileFromGCS(course.thumbnail_image); // Use the GCS helper
+      await deleteFileFromGCS(course.thumbnail_image);
+    }
+
+    for (const module of course.modules) {
+      if (module.pdf_content) {
+        await deleteFileFromGCS(module.pdf_content);
+      }
+      if (module.video_content) {
+        await deleteFileFromGCS(module.video_content);
+      }
     }
 
     return { message: `Course with ID "${id}" deleted successfully.` };
@@ -293,7 +307,6 @@ export class CoursesService {
   }
 
   async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15, isAdmin: boolean = false) {
-    // Check if user has purchased the course or is an admin
     if (!isAdmin) {
       const userCourse = await this.prisma.userCourse.findUnique({
         where: { userId_courseId: { userId, courseId } },

@@ -15,7 +15,6 @@ export class AuthService {
   async register(registerUserDto: RegisterUserDto) {
     const { email, username, password, confirm_password, first_name, last_name } = registerUserDto;
 
-    // Check if passwords match
     if (password !== confirm_password) {
       throw new BadRequestException('Passwords do not match.');
     }
@@ -93,14 +92,13 @@ export class AuthService {
     
     return {
       ...user,
-      balance: user.balance / 100, // Convert from cents to dollars
+      balance: user.balance / 100,
     };
   }
 
   async validateGoogleUser(googleUser: any) {
     const { googleId, email, firstName, lastName, picture } = googleUser;
 
-    // Check if user exists by email or Google ID
     let user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -111,7 +109,6 @@ export class AuthService {
     });
 
     if (user) {
-      // User exists, update Google ID if not set
       if (!user.googleId) {
         user = await this.prisma.user.update({
           where: { id: user.id },
@@ -119,7 +116,6 @@ export class AuthService {
         });
       }
     } else {
-      // Create new user
       const username = email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
       
       user = await this.prisma.user.create({
@@ -129,13 +125,12 @@ export class AuthService {
           firstName,
           lastName,
           googleId,
-          password: '', // Google users don't need a password
+          password: '',
           picture,
         },
       });
     }
 
-    // Generate JWT token
     const payload = { sub: user.id, username: user.username };
     const token = this.jwtService.sign(payload);
 

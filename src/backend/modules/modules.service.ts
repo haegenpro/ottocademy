@@ -189,6 +189,14 @@ export class ModulesService {
       throw new NotFoundException(`Module with ID "${id}" not found.`);
     }
     
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.moduleCompletion.deleteMany({
+        where: { moduleId: id },
+      });
+
+      await prisma.module.delete({ where: { id } });
+    });
+
     if (module.pdf_content) {
       await deleteFileFromGCS(module.pdf_content);
     }
@@ -196,12 +204,10 @@ export class ModulesService {
       await deleteFileFromGCS(module.video_content);
     }
 
-    await this.prisma.module.delete({ where: { id } });
     return { message: `Module with ID "${id}" has been deleted.` };
   }
 
   async reorderModules(courseId: string, moduleOrder: { id: string; order: number }[]) {
-    // Verify that all modules belong to the specified course
     const moduleIds = moduleOrder.map(item => item.id);
     const modules = await this.prisma.module.findMany({
       where: {
@@ -214,7 +220,6 @@ export class ModulesService {
       throw new NotFoundException('One or more modules not found or do not belong to this course');
     }
 
-    // Update the order for each module
     const updatePromises = moduleOrder.map(item =>
       this.prisma.module.update({
         where: { id: item.id },
@@ -224,7 +229,6 @@ export class ModulesService {
 
     await Promise.all(updatePromises);
 
-    // Return the updated order
     return moduleOrder;
   }
 }

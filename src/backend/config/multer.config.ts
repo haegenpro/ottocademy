@@ -25,7 +25,6 @@ export const multerConfig: MulterOptions = {
     },
   }),
   fileFilter: (req, file, cb) => {
-    // Your existing fileFilter logic can remain the same
     const allowedMimes = {
       'thumbnail_image': ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
       'pdf_content': ['application/pdf'],

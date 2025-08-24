@@ -16,7 +16,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     
     if (!clientID || !clientSecret || clientID === 'placeholder-client-id') {
       console.warn('Google OAuth is not properly configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.');
-      // Provide dummy values to prevent startup crash
       super({
         clientID: 'dummy-client-id',
         clientSecret: 'dummy-client-secret',

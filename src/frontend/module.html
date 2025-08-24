@@ -319,10 +319,8 @@
 
             if (hasPdf) {
                 pdfTab.classList.remove('hidden');
-                // Store current PDF URL and automatically load it
                 window.currentPdfUrl = module.pdf_content;
                 
-                // Automatically load PDF in iframe
                 const pdfFrame = document.getElementById('pdfFrame');
                 if (pdfFrame) {
                     pdfFrame.src = module.pdf_content;
@@ -371,7 +369,6 @@
                 pdfTab.classList.remove('btn-outline');
                 pdfContent.classList.remove('hidden');
                 
-                // Automatically load PDF when switching to PDF tab
                 if (window.currentPdfUrl) {
                     const pdfFrame = document.getElementById('pdfFrame');
                     if (pdfFrame && !pdfFrame.src) {

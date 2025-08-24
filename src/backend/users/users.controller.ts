@@ -82,7 +82,6 @@ export class UsersController {
   @Delete(':id')
   @HttpCode(204)
   async remove(@Param('id') id: string, @Request() req, @Res() res: Response) {
-    // Get the admin user ID from the JWT token
     const adminUserId = req.user.id;
     await this.usersService.remove(id, adminUserId);
     res.status(204).send();

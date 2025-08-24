@@ -110,21 +110,18 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   async googleAuth(@Request() req) {
-    // Debug environment variables
     console.log('=== Google OAuth Debug ===');
     console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
     console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '[HIDDEN]' : 'undefined');
     console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
     console.log('========================');
     
-    // Check if Google OAuth is properly configured
     if (process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' || !process.env.GOOGLE_CLIENT_ID) {
       console.log('Google OAuth validation failed - not configured');
       throw new Error('Google OAuth is not configured. Please contact the administrator.');
     }
     
     console.log('Google OAuth validation passed - redirecting to Google');
-    // This will be handled by the GoogleAuthGuard using Passport
   }
 
   @Get('google/callback')
@@ -133,14 +130,10 @@ export class AuthController {
     try {
       const result = req.user;
       
-      // Instead of setting HTTP-only cookie, redirect with token in URL
-      // The frontend will extract it and store in localStorage
       const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
       
-      // Encode the token to make it URL-safe
       const encodedToken = encodeURIComponent(result.token);
       
-      // Redirect to auth page with token - frontend will handle storage and redirect
       res.redirect(`${frontendUrl}/auth.html?oauth=success&token=${encodedToken}`);
     } catch (error) {
       console.error('OAuth callback error:', error);
