@@ -151,19 +151,19 @@
                     return;
                 }
                 
-                const profile = await api.getProfile();
-                userInfo = profile;
+                const response = await api.getProfile();
+                userInfo = response.data;
                 
-                const balance = profile.balance || 0;
+                const balance = userInfo.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);
                 
                 if (error.message === 'Authentication required') {
+                    window.location.href = 'auth.html';
                     return;
                 }
                 document.getElementById('userBalance').textContent = 'Balance: --';
-                showToast('Unable to load user profile', 'warning');
             }
         }
 

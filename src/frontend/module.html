@@ -154,7 +154,9 @@
 
         async function loadUserInfo() {
             try {
-                const { balance } = await api.getProfile();
+                const response = await api.getProfile();
+                const profile = response.data;
+                const balance = profile.balance || 0;
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(balance)}`;
             } catch (error) {
                 console.error('Failed to load user info:', error);

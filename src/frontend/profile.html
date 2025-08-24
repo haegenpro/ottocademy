@@ -60,10 +60,6 @@
                             <span id="displayBalance" class="font-medium ml-2 text-primary">Loading...</span>
                         </div>
                         <div>
-                            <span class="text-muted-foreground">Member since:</span>
-                            <span id="displayJoinDate" class="font-medium ml-2">Loading...</span>
-                        </div>
-                        <div>
                             <span class="text-muted-foreground">Account type:</span>
                             <span id="displayRole" class="font-medium ml-2">Loading...</span>
                         </div>
@@ -89,22 +85,17 @@
             const content = document.getElementById('profileContent');
             
             try {
-                const profile = await api.getProfile();
+                const response = await api.getProfile();
+                const profile = response.data;
                 
                 document.getElementById('userBalance').textContent = `Balance: ${formatCurrency(profile.balance)}`;
                 
-                document.getElementById('displayName').textContent = `${profile.firstName} ${profile.lastName}`;
+                document.getElementById('displayName').textContent = `${profile.first_name} ${profile.last_name}`;
                 document.getElementById('displayEmail').textContent = profile.email;
                 document.getElementById('displayUsername').textContent = profile.username;
                 document.getElementById('displayBalance').textContent = formatCurrency(profile.balance);
-                document.getElementById('displayRole').textContent = profile.isAdmin ? 'Administrator' : 'Student';
+                document.getElementById('displayRole').textContent = 'Student';
                 
-                const joinDate = new Date(profile.createdAt || Date.now()).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                document.getElementById('displayJoinDate').textContent = joinDate;
                 
                 spinner.classList.add('hidden');
                 content.classList.remove('hidden');

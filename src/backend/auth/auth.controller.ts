@@ -22,8 +22,20 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('self')
-  getSelf(@Request() req) {
-    return this.authService.getProfile(req.user.id);
+  async getSelf(@Request() req) {
+    const profile = await this.authService.getProfile(req.user.id);
+    return {
+      status: 'success',
+      message: 'Profile retrieved successfully',
+      data: {
+        id: profile.id,
+        username: profile.username,
+        email: profile.email,
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        balance: profile.balance,
+      },
+    };
   }
 
   @Get('debug/env')

@@ -70,53 +70,25 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        purchasedCourses: {
-          include: {
-            course: {
-              include: {
-                modules: {
-                  orderBy: { order: 'asc' },
-                },
-              },
-            },
-          },
-        },
-        moduleCompletions: {
-          where: { isCompleted: true },
-          include: {
-            module: {
-              select: {
-                id: true,
-                title: true,
-                courseId: true,
-              },
-            },
-          },
-        },
-        certificates: {
-          include: {
-            course: {
-              select: {
-                id: true,
-                title: true,
-                instructor: true,
-              },
-            },
-          },
-        },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        balance: true,
+        isAdmin: true,
+        picture: true,
       },
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found.');
     }
-
-    const { password: _, ...userWithoutPassword } = user;
     
     return {
-      ...userWithoutPassword,
-      balance: userWithoutPassword.balance / 100,
+      ...user,
+      balance: user.balance / 100, // Convert from cents to dollars
     };
   }
 
