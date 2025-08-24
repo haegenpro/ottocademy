@@ -26,18 +26,6 @@ export class AuthController {
     return this.authService.getProfile(req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Put('profile')
-  updateProfile(@Request() req, @Body() updateData: { username?: string; firstName?: string; lastName?: string }) {
-    return this.authService.updateProfile(req.user.id, updateData);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Put('password')
-  updatePassword(@Request() req, @Body() passwordData: { currentPassword: string; newPassword: string }) {
-    return this.authService.updatePassword(req.user.id, passwordData);
-  }
-
   @Get('debug/env')
   debugEnv() {
     return {
@@ -50,7 +38,8 @@ export class AuthController {
   }
 
   @Get('google')
-  async googleAuth(@Request() req, @Res() res: Response) {
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth(@Request() req) {
     // Debug environment variables
     console.log('=== Google OAuth Debug ===');
     console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
@@ -61,15 +50,11 @@ export class AuthController {
     // Check if Google OAuth is properly configured
     if (process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' || !process.env.GOOGLE_CLIENT_ID) {
       console.log('Google OAuth validation failed - not configured');
-      return res.status(501).json({
-        status: 'error',
-        message: 'Google OAuth is not configured. Please contact the administrator.',
-      });
+      throw new Error('Google OAuth is not configured. Please contact the administrator.');
     }
     
     console.log('Google OAuth validation passed - redirecting to Google');
-    // If configured, redirect to Google OAuth
-    return res.redirect(`https://accounts.google.com/oauth/authorize?response_type=code&client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback')}&scope=email%20profile`);
+    // This will be handled by the GoogleAuthGuard using Passport
   }
 
   @Get('google/callback')
@@ -78,19 +63,19 @@ export class AuthController {
     try {
       const result = req.user;
       
-      // Set the token as an HTTP-only cookie
-      res.cookie('token', result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 3600000, // 1 hour
-      });
-
-      // Redirect to frontend with success
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth.html?oauth=success`);
+      // Instead of setting HTTP-only cookie, redirect with token in URL
+      // The frontend will extract it and store in localStorage
+      const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
+      
+      // Encode the token to make it URL-safe
+      const encodedToken = encodeURIComponent(result.token);
+      
+      // Redirect to auth page with token - frontend will handle storage and redirect
+      res.redirect(`${frontendUrl}/auth.html?oauth=success&token=${encodedToken}`);
     } catch (error) {
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      res.redirect(`${frontendUrl}/auth.html?oauth=error`);
+      console.error('OAuth callback error:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
+      res.redirect(`${frontendUrl}/auth.html?oauth=error&message=${encodeURIComponent('Authentication failed')}`);
     }
   }
 }

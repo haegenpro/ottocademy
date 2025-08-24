@@ -1,26 +1,24 @@
 # 🍌 Grocademy - Learn with the Minions!
 
-A comprehensive course platform built with NestJS backend and vanilla frontend integration, featuring user authentication, course management, module tracking, and a Docker-ready setup.
+A comprehensive course platform built with NestJS backend and vanilla frontend integration, featuring user authentication, course management, module tracking, Google OAuth, and a Docker-ready setup.
 
 <div align="center">
   <img src="https://img.shields.io/badge/Node.js-18+-green.svg" alt="Node.js" />
   <img src="https://img.shields.io/badge/NestJS-10+-red.svg" alt="NestJS" />
   <img src="https://img.shields.io/badge/PostgreSQL-15+-blue.svg" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Docker-Ready-blue.svg" alt="Docker" />
+  <img src="https://img.shields.io/badge/OAuth-Google-blue.svg" alt="Google OAuth" />
 </div>
 
 ## 📋 Table of Contents
 
 - [Project Overview](#-project-overview)
 - [Features](#-features)
-- [Architecture](#-architecture)
 - [Quick Start](#-quick-start)
-- [Frontend Specification](#-frontend-specification)
-- [Backend Specification](#-backend-specification)
+- [Google OAuth Configuration](#-google-oauth-configuration)
+- [Architecture & SOLID Principles](#-architecture--solid-principles)
 - [API Documentation](#-api-documentation)
-- [Database Schema](#-database-schema)
 - [Development](#-development)
-- [Deployment](#-deployment)
 - [Troubleshooting](#-troubleshooting)
 
 ## 🎯 Project Overview
@@ -34,13 +32,20 @@ Grocademy is a monolithic web application that combines a NestJS backend with a 
 - **Course Management**: Browse, purchase, and track course progress
 - **Module System**: Sequential learning with progress tracking
 - **Certificate Generation**: Automatic certificate creation upon course completion
+- **Google OAuth**: Alternative authentication method for enhanced user experience
 
 ## ✨ Features
 
+### Authentication & Security
+- ✅ **Traditional Auth**: Email/username and password login
+- ✅ **Google OAuth**: Sign in with Google account integration
+- ✅ **JWT Authentication**: Secure token-based authentication with Passport
+- ✅ **Role-based Access**: Admin and user role differentiation
+- ✅ **Password Security**: Bcrypt hashing for password protection
+
 ### Frontend Features (F01 - Monolith FE)
 - ✅ **User Registration**: Email, username, full name, and password
-- ✅ **User Authentication**: Login with email/username and password
-- ✅ **Course Browsing**: Search, filter, and paginated course listing
+- ✅ **Course Browsing**: Search, filter, and paginated course listing with real-time statistics
 - ✅ **Course Details**: Complete course information with purchase/access controls
 - ✅ **My Courses**: Personal dashboard for purchased courses
 - ✅ **Module Viewer**: Sequential module access with progress tracking
@@ -48,43 +53,234 @@ Grocademy is a monolithic web application that combines a NestJS backend with a 
 - ✅ **Certificate Download**: PDF certificates for completed courses
 
 ### Backend Features (F02 - Monolith BE & F03 - REST API)
-- ✅ **User Management**: CRUD operations with role-based access
+- ✅ **User Management**: CRUD operations with role-based access and admin protections
 - ✅ **Course Management**: Full course lifecycle management
 - ✅ **Module Management**: Content organization and sequencing
 - ✅ **Purchase System**: Course buying with balance validation
 - ✅ **Progress Tracking**: Module completion and course progress
-- ✅ **Authentication**: JWT-based authentication with Passport
 - ✅ **File Upload**: Support for course materials and user avatars
+- ✅ **Statistics API**: Dynamic course and category counts for homepage
 
-## 🏗️ Architecture
+### Bonus Features Implemented
+- ✅ **B10 - OAuth**: Google authentication as alternative login method
+- ✅ **B08 - SOLID**: Comprehensive SOLID principles implementation
+- ✅ **B06 - Responsive**: Mobile-first responsive design
+
+## 🏗️ Architecture & SOLID Principles
+
+### Project Structure
 
 ```
 grocademy-api/
 ├── src/
 │   ├── backend/               # NestJS Backend
-│   │   ├── auth/              # Authentication (JWT, Passport)
-│   │   ├── users/             # User management and profiles
-│   │   ├── courses/           # Course CRUD and management
-│   │   ├── modules/           # Module content and ordering
-│   │   ├── files/             # File upload handling
-│   │   ├── prisma/            # Database service
+│   │   ├── auth/              # Authentication module (JWT, OAuth)
+│   │   ├── users/             # User management service
+│   │   ├── courses/           # Course business logic
+│   │   ├── modules/           # Module content management
+│   │   ├── statistics/        # Statistics aggregation service
+│   │   ├── prisma/            # Database abstraction layer
 │   │   └── main.ts            # Application entry point
 │   └── frontend/              # Vanilla Frontend
-│       ├── index.html         # Landing page
-│       ├── auth.html          # Login/Register forms
+│       ├── index.html         # Landing page with statistics
+│       ├── auth.html          # Login/Register with OAuth
 │       ├── courses.html       # Course browsing
 │       ├── course-detail.html # Individual course details
 │       ├── my-courses.html    # User's purchased courses
 │       ├── module.html        # Module content viewer
-│       ├── css/styles.css     # Minion-themed styling
-│       └── js/api.js          # API integration layer
+│       ├── css/styles.css     # Responsive design system
+│       └── js/api.js          # API abstraction layer
 ├── prisma/
-│   ├── schema.prisma          # Database schema
+│   ├── schema.prisma          # Database schema with OAuth support
 │   └── migrations/            # Database migrations
 ├── docker-compose.yml         # Container orchestration
-├── Dockerfile                 # Multi-stage build
-└── scripts/                   # Setup and seeding scripts
+└── Dockerfile                 # Multi-stage production build
 ```
+
+### SOLID Principles Implementation
+
+This project comprehensively implements all five SOLID principles to ensure maintainable, extensible, and testable code:
+
+#### 1. **Single Responsibility Principle (SRP)**
+
+Each class and module has a single, well-defined responsibility:
+
+**Examples:**
+- **`AuthService`**: Handles only user authentication logic (register, login, JWT validation)
+- **`UsersService`**: Manages only user-related operations (CRUD, balance management)
+- **`CoursesService`**: Focuses solely on course business logic
+- **`PrismaService`**: Acts as the single database abstraction layer
+- **`GoogleStrategy`**: Handles only Google OAuth authentication flow
+
+**Implementation Details:**
+```typescript
+// AuthService - Single responsibility: Authentication
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
+  async register(registerUserDto: RegisterUserDto) { /* Only registration logic */ }
+  async login(loginUserDto: LoginUserDto) { /* Only login logic */ }
+  async validateGoogleUser(googleUser: any) { /* Only Google validation */ }
+}
+
+// StatisticsService - Single responsibility: Data aggregation
+@Injectable()
+export class StatisticsService {
+  constructor(private prisma: PrismaService) {}
+
+  async getOverviewStats() { /* Only statistics computation */ }
+}
+```
+
+#### 2. **Open/Closed Principle (OCP)**
+
+The system is open for extension but closed for modification:
+
+**Examples:**
+- **Authentication Strategy Pattern**: Easy to add new OAuth providers (Facebook, Twitter) without modifying existing auth code
+- **Module Type Extensions**: Can add new module types (quiz, interactive) by extending the base ModuleType enum
+- **Service Layer Architecture**: New business features can be added through new services without changing existing ones
+
+**Implementation Details:**
+```typescript
+// Easy to extend with new OAuth strategies
+@Injectable()
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  // Google-specific implementation
+}
+
+// Future: FacebookStrategy, TwitterStrategy can be added without changing existing code
+
+// Module system designed for extension
+enum ModuleType {
+  TEXT = 'TEXT',
+  PDF = 'PDF',
+  VIDEO = 'VIDEO',
+  // Future: QUIZ, INTERACTIVE, SIMULATION can be added
+}
+```
+
+#### 3. **Liskov Substitution Principle (LSP)**
+
+Derived classes can be substituted for their base classes without breaking functionality:
+
+**Examples:**
+- **Passport Strategies**: All authentication strategies (JWT, Google) implement the same interface and can be used interchangeably
+- **Database Services**: PrismaService implements a consistent interface that could be replaced with other ORM implementations
+- **DTO Validation**: All DTOs follow consistent validation patterns using class-validator
+
+**Implementation Details:**
+```typescript
+// All strategies can be substituted without breaking the authentication flow
+export class JwtStrategy extends PassportStrategy(Strategy) { /* ... */ }
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') { /* ... */ }
+
+// Both follow same interface contract for Passport
+```
+
+#### 4. **Interface Segregation Principle (ISP)**
+
+Clients are not forced to depend on interfaces they don't use:
+
+**Examples:**
+- **Service Injection**: Controllers only inject services they actually need
+- **DTO Segregation**: Separate DTOs for different operations (RegisterUserDto, LoginUserDto, UpdateUserDto)
+- **Response Interfaces**: Different response types for different API endpoints
+
+**Implementation Details:**
+```typescript
+// Controllers only depend on services they need
+@Controller('auth')
+export class AuthController {
+  constructor(
+    private authService: AuthService,  // Only auth-related dependencies
+  ) {}
+}
+
+@Controller('users')
+export class UsersController {
+  constructor(
+    private usersService: UsersService,  // Only user-related dependencies
+  ) {}
+}
+
+// Segregated DTOs for different purposes
+export class RegisterUserDto { /* Registration-specific fields */ }
+export class LoginUserDto { /* Login-specific fields */ }
+export class UpdateUserDto { /* Update-specific fields */ }
+```
+
+#### 5. **Dependency Inversion Principle (DIP)**
+
+High-level modules don't depend on low-level modules; both depend on abstractions:
+
+**Examples:**
+- **Service Dependencies**: All services depend on PrismaService abstraction, not direct database calls
+- **JWT Abstraction**: AuthService depends on JwtService interface, not specific JWT implementation
+- **Validation Abstraction**: Controllers depend on validation decorators, not specific validation logic
+
+**Implementation Details:**
+```typescript
+// High-level AuthService depends on abstractions
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,      // Database abstraction
+    private jwtService: JwtService,     // JWT abstraction
+  ) {}
+}
+
+// PrismaService abstracts database operations
+@Injectable()
+export class PrismaService extends PrismaClient {
+  // Database operations abstracted through Prisma
+}
+
+// Dependency injection through NestJS modules
+@Module({
+  providers: [
+    AuthService,
+    UsersService,
+    PrismaService,    // Dependencies injected through DI container
+    JwtService,
+  ],
+})
+export class AuthModule {}
+```
+
+### Design Patterns Implemented
+
+Beyond SOLID principles, the project implements several design patterns:
+
+#### 1. **Strategy Pattern**
+- **Authentication Strategies**: JWT and Google OAuth strategies
+- **File Upload Strategies**: Different upload handlers for courses, modules
+
+#### 2. **Repository Pattern**
+- **PrismaService**: Acts as repository layer abstracting database operations
+- **Service Layer**: Encapsulates business logic separate from data access
+
+#### 3. **Dependency Injection Pattern**
+- **NestJS DI Container**: Manages service lifecycles and dependencies
+- **Module System**: Organizes related services and controllers
+
+#### 4. **MVC Pattern**
+- **Controllers**: Handle HTTP requests and responses
+- **Services**: Contain business logic
+- **Models**: Prisma schema defines data models
+
+### Benefits of This Architecture
+
+1. **Maintainability**: Each component has clear responsibilities and minimal coupling
+2. **Testability**: Dependencies can be easily mocked for unit testing
+3. **Extensibility**: New features can be added without modifying existing code
+4. **Scalability**: Modular architecture allows for easy service separation if needed
+5. **Code Reusability**: Services can be reused across different controllers
+6. **Error Handling**: Centralized exception handling through NestJS filters
 
 ## 🚀 Quick Start
 
@@ -92,6 +288,7 @@ grocademy-api/
 - **Node.js** (v18 or higher)
 - **npm** or **yarn**
 - **PostgreSQL** (for local development) OR **Docker** (recommended)
+- **Google Developer Account** (for OAuth functionality)
 
 ### 🐳 Option A: Docker Development (Recommended)
 
@@ -106,7 +303,7 @@ chmod +x docker-seed.sh && ./docker-seed.sh
 
 **What this script does:**
 - ✅ Sets up PostgreSQL database in Docker
-- ✅ Runs database migrations
+- ✅ Runs database migrations (includes Google OAuth schema)
 - ✅ Seeds initial data (courses, users, modules)
 - ✅ Builds and starts the application
 - ✅ Smart seeding (only seeds if database is empty)
@@ -120,7 +317,7 @@ docker-compose up --build
 - **Frontend**: http://127.0.0.1:3000
 - **API Endpoints**: http://127.0.0.1:3000/api
 
-### � Option B: Local Development
+### 💻 Option B: Local Development
 
 #### 1. Environment Setup
 Create `.env` file:
@@ -133,6 +330,11 @@ DATABASE_URL="postgresql://postgres:your_password@localhost:5432/grocademy?schem
 
 # JWT Secret
 JWT_SECRET=your_super_secret_jwt_key
+
+# Google OAuth Configuration (see Google OAuth Configuration section)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://127.0.0.1:3000/auth/google/callback
 
 # Application Port
 PORT=3000
@@ -160,139 +362,123 @@ npm run build
 npm run start:prod
 ```
 
-## 🖥️ Frontend Specification
+## 🔐 Google OAuth Configuration
 
-### Page Structure
+### Current Status
+🔧 **Google OAuth is not configured** - Using placeholder credentials
 
-#### 1. Landing Page (`index.html`)
-- **Hero section** with platform introduction
-- **Quick access** to authentication
-- **Feature highlights** and statistics
-- **Responsive design** with Minion theme
+### Step 1: Google Cloud Console Setup
 
-#### 2. Authentication Page (`auth.html`)
-- **Registration form** with validation:
-  - Email (required, unique)
-  - Username (required, unique)
-  - First Name & Last Name (required)
-  - Password & Confirmation (required, min 6 chars)
-- **Login form** with email/username + password
-- **Error handling** with user-friendly messages
-- **Automatic redirect** after successful authentication
+1. **Create a Google Cloud Project**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing one
+   - Enable the **Google+ API** and **People API**
 
-#### 3. Course Browsing (`courses.html`)
-- **Search functionality** across course titles and descriptions
-- **Pagination** (backend-implemented with configurable page size)
-- **Course filtering** by category
-- **Responsive grid layout** with course cards
-- **Real-time search** with debouncing
+2. **Configure OAuth Consent Screen**:
+   - Navigate to **APIs & Services** > **OAuth consent screen**
+   - Choose **External** user type
+   - Fill in required fields:
+     - App name: `Grocademy`
+     - User support email: Your email
+     - Developer contact: Your email
+   - Add scopes: `email`, `profile`
 
-#### 4. Course Detail (`course-detail.html`)
-- **Complete course information**: title, description, instructor, price
-- **Module listing** with locked/unlocked status
-- **Purchase button** (if not owned and sufficient balance)
-- **Access button** (if owned)
-- **Certificate download** (if completed)
-- **Progress indicator** for owned courses
+3. **Create OAuth 2.0 Credentials**:
+   - Go to **APIs & Services** > **Credentials**
+   - Click **Create Credentials** > **OAuth 2.0 Client ID**
+   - Choose **Web application**
+   - Set **Authorized redirect URIs**:
+     - Development: `http://127.0.0.1:3000/auth/google/callback`
+     - Alternative: `http://localhost:3000/auth/google/callback`
+     - Production: `https://yourdomain.com/auth/google/callback`
 
-#### 5. My Courses (`my-courses.html`)
-- **Purchased courses dashboard**
-- **Progress tracking** with visual indicators
-- **Quick access** to continue learning
-- **Completion status** and certificates
+### Step 2: Environment Variables Setup
 
-#### 6. Module Viewer (`module.html`)
-- **Sequential module navigation**
-- **Content display** (PDF viewer/video player)
-- **Completion marking** functionality
-- **Progress bar** for course completion
-- **Responsive design** for various content types
-
-### Frontend Technology Stack
-- **HTML5**: Semantic markup and accessibility
-- **CSS3**: Custom properties, flexbox, grid, Tailwind-based utilities
-- **Vanilla JavaScript**: ES6+, async/await, Fetch API
-- **Design System**: Minion-themed with yellow (#fbbf24) and blue (#87ceeb)
-
-## ⚙️ Backend Specification
-
-### Core Modules
-
-#### 1. Authentication Module (`/auth`)
-- **User registration** with validation
-- **JWT-based login** with Passport integration
-- **Profile management** and user info retrieval
-- **Role-based access control** (Admin/User)
-
-#### 2. User Management (`/users`)
-- **CRUD operations** for user accounts
-- **Balance management** for course purchases
-- **Admin-only** user management endpoints
-- **Profile picture** upload support
-
-#### 3. Course Management (`/courses`)
-- **Public course listing** with search and pagination
-- **Course CRUD** operations (admin-only for create/update/delete)
-- **Course purchasing** with balance validation
-- **Category-based** organization
-- **File upload** for course materials
-
-#### 4. Module Management (`/modules`)
-- **Module CRUD** operations
-- **Content management** (text, PDF, video URLs)
-- **Order management** and sequencing
-- **Progress tracking** integration
-- **Completion marking**
-
-### Database Models
-
-#### User
-```prisma
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  firstName String
-  lastName  String
-  password  String
-  balance   Float    @default(0)
-  role      Role     @default(USER)
-  // Relations...
-}
+Replace the placeholder values in your `.env` file:
+```env
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=your-actual-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-actual-google-client-secret-here
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 ```
 
-#### Course
-```prisma
-model Course {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  instructor  String
-  price       Float
-  category    Category
-  imageUrl    String?
-  // Relations...
-}
+### Step 3: Restart Application
+```bash
+docker-compose down
+docker-compose up --build -d
 ```
 
-#### Module
-```prisma
-model Module {
-  id          String      @id @default(uuid())
-  title       String
-  content     String
-  type        ModuleType
-  order       Int
-  courseId    String
-  // Relations...
-}
-```
+### Step 4: Current Behavior & Security Features
 
-## 📡 API Documentation
+**Authentication Status:**
+- ✅ **Email/Password login**: Works normally
+- ⚠️ **Google OAuth**: Shows user-friendly error message until configured
+- 🔧 **Configuration**: Prevents application crashes with invalid credentials
+
+**Security Features:**
+- ✅ Validates OAuth configuration before attempting authentication
+- ✅ Provides fallback dummy credentials to prevent startup crashes
+- ✅ Shows informative error messages to users
+- ✅ Graceful degradation when OAuth is not configured
+
+### Step 5: Testing OAuth Integration
+
+1. **Start the application**:
+   ```bash
+   docker-compose up --build
+   # OR for local development
+   npm run start:dev
+   ```
+
+2. **Test OAuth flow**:
+   - Visit `http://127.0.0.1:3000/auth.html`
+   - Click "Sign in with Google" button
+   - Complete Google authentication
+   - You should be redirected back with successful login
+
+### Step 6: OAuth Features
+
+**Backend Features:**
+- Automatic user creation if Google account doesn't exist
+- Links Google account to existing user if email matches
+- Stores Google profile picture URL
+- Maintains Google ID for future logins
+
+**Frontend Features:**
+- Google OAuth buttons with Material Design icons
+- Seamless integration with existing authentication flow
+- Error handling for OAuth failures
+- Automatic redirect after successful authentication
+
+### Step 7: Troubleshooting OAuth
+
+**Common Issues:**
+
+1. **"redirect_uri_mismatch" error**:
+   - Verify callback URL in Google Console matches your `.env` file
+   - Ensure no trailing slashes or different protocols
+
+2. **"invalid_client" error**:
+   - Check `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
+   - Verify OAuth consent screen is properly configured
+
+3. **OAuth not working in production**:
+   - Update redirect URI in Google Console for production domain
+   - Ensure HTTPS is used in production callback URL
+
+4. **Database connection issues**:
+   - Verify Prisma migrations include Google OAuth schema
+   - Check `googleId` and `picture` fields exist in User model
+
+---
+
+*Once you add real Google OAuth credentials, the "Continue with Google" button will work properly!*
+
+## � API Documentation
 
 ### Authentication Endpoints
 
-#### Register User
+#### Traditional Authentication
 ```http
 POST /auth/register
 Content-Type: application/json
@@ -306,7 +492,6 @@ Content-Type: application/json
 }
 ```
 
-#### Login User
 ```http
 POST /auth/login
 Content-Type: application/json
@@ -317,78 +502,91 @@ Content-Type: application/json
 }
 ```
 
-### Course Endpoints
-
-#### Get All Courses
+#### Google OAuth Authentication
 ```http
-GET /courses?search=keyword&page=1&limit=12&category=PROGRAMMING
+GET /auth/google
+# Redirects to Google OAuth consent screen
+
+GET /auth/google/callback?code=...
+# Google callback endpoint (handled automatically)
 ```
 
-#### Get Course by ID
+#### User Profile
 ```http
-GET /courses/{courseId}
-```
-
-#### Purchase Course
-```http
-POST /courses/{courseId}/buy
+GET /auth/self
 Authorization: Bearer {jwt_token}
 ```
 
-### Module Endpoints
+### Core Endpoints
 
-#### Get Course Modules
+#### Statistics (Homepage)
 ```http
-GET /courses/{courseId}/modules
+GET /api/statistics/overview
+# Returns course counts by category and total statistics
+```
+
+#### Courses
+```http
+GET /api/courses?search=keyword&page=1&limit=12&category=PROGRAMMING
+GET /api/courses/{courseId}
+POST /api/courses/{courseId}/buy
 Authorization: Bearer {jwt_token}
 ```
 
-#### Mark Module Complete
+#### My Courses
 ```http
-PATCH /modules/{moduleId}/complete
+GET /api/courses/my-courses?page=1&limit=10
 Authorization: Bearer {jwt_token}
 ```
 
-### User Management (Admin Only)
-
-#### Get All Users
+#### Modules
 ```http
-GET /users
+GET /api/courses/{courseId}/modules
+Authorization: Bearer {jwt_token}
+
+PATCH /api/modules/{moduleId}/complete
+Authorization: Bearer {jwt_token}
+```
+
+### Admin-Only Endpoints
+
+#### User Management
+```http
+GET /api/users?q=search&page=1&limit=15
+POST /api/users/{userId}/balance
+PUT /api/users/{userId}
+DELETE /api/users/{userId}
 Authorization: Bearer {admin_jwt_token}
 ```
 
-#### Add User Balance
+#### Course Management
 ```http
-POST /users/{userId}/balance
+POST /api/courses
+PUT /api/courses/{id}
+DELETE /api/courses/{id}
 Authorization: Bearer {admin_jwt_token}
-Content-Type: application/json
+```
 
+#### Module Management
+```http
+POST /api/courses/{courseId}/modules
+PUT /api/modules/{id}
+DELETE /api/modules/{id}
+PATCH /api/courses/{courseId}/modules/reorder
+Authorization: Bearer {admin_jwt_token}
+```
+
+### Response Format
+
+All API responses follow a consistent format:
+```json
 {
-  "amount": 100.00
+  "status": "success" | "error",
+  "data": { /* response data */ },
+  "message": "Optional message",
+  "pagination": { /* for paginated responses */ }
 }
 ```
-
-## 🎨 Design System
-
-### Color Palette
-- **Primary Yellow**: `#fbbf24` (Minion theme)
-- **Secondary Blue**: `#87ceeb` (Light blue accent)
-- **Background**: `#ffffff` (Clean white)
-- **Text**: `#1e293b` (Dark slate gray)
-- **Muted**: `#64748b` (Medium gray)
-
-### Typography
-- **Font Family**: Inter (Google Fonts)
-- **Headings**: 600-700 font weight
-- **Body Text**: 400-500 font weight
-- **Responsive sizing** with mobile-first approach
-
-### Component Library
-- **Cards**: Rounded corners, subtle shadows, hover effects
-- **Buttons**: Primary, secondary, outline variants with loading states
-- **Forms**: Clean inputs with validation feedback
-- **Navigation**: Sticky header with responsive collapsing
-- **Progress Bars**: Animated with percentage indicators
 
 ## 🛠️ Development
 
@@ -399,11 +597,10 @@ Content-Type: application/json
 | `npm run build` | Build TypeScript and CSS |
 | `npm run build:css:prod` | Build minified CSS |
 | `npm run start:prod` | Start production server |
-| `npm run start:dev` | Development mode with watching |
+| `npm run start:dev` | Development mode with file watching |
 | `npm run seed` | Seed database with initial data |
 | `npm run lint` | Run ESLint |
 | `npm run format` | Format with Prettier |
-| `npm run test` | Run unit tests |
 
 ### Database Management
 
@@ -421,111 +618,47 @@ npx prisma migrate reset
 npx prisma studio
 ```
 
-### File Upload Configuration
+### Design System & UI Components
 
-The application includes a comprehensive file upload system for course materials and user content.
+**Color Palette:**
+- **Primary Yellow**: `#fbbf24` (Minion theme)
+- **Secondary Blue**: `#87ceeb` (Light blue accent)
+- **Background**: `#ffffff` (Clean white)
+- **Text**: `#1e293b` (Dark slate gray)
 
-#### Upload Directory Structure
+**Typography:**
+- **Font Family**: Inter (Google Fonts)
+- **Responsive sizing** with mobile-first approach
 
-All uploaded files are organized in the `public/uploads/` directory:
+**Features:**
+- **Responsive Design**: Mobile-first responsive layout (B06)
+- **Component Library**: Cards, buttons, forms with consistent styling
+- **Navigation**: Sticky header with responsive collapsing
+- **Progress Bars**: Animated with percentage indicators
 
-```
-public/uploads/
-├── courses/           # Course thumbnail images
-├── modules/
-│   ├── pdf/          # Module PDF content
-│   └── video/        # Module video content
-└── certificates/     # Generated course certificates
-```
+### Security Features
 
-#### Local Development Setup
+- **Input validation** with class-validator
+- **SQL injection protection** via Prisma ORM
+- **JWT token authentication** with expiration
+- **Password hashing** with bcrypt
+- **File upload validation** and size limits
+- **CORS configuration** for cross-origin requests
+- **Environment variable** security
 
-**Course Thumbnails:**
-- **Location**: `public/uploads/courses/`
-- **Access URL**: `http://localhost:3000/uploads/courses/filename.jpg`
-- **Supported formats**: JPG, PNG, WebP
-- **Recommended size**: 400x300px (4:3 ratio)
-- **Max file size**: 5MB
-
-**Module Content:**
-- **PDFs**: `public/uploads/modules/pdf/`
-- **Videos**: `public/uploads/modules/video/`
-- **Access URL**: `http://localhost:3000/uploads/modules/pdf/filename.pdf`
-- **Supported formats**: MP4/WebM (video), PDF (documents)
-- **Max file size**: 100MB (videos), 50MB (PDFs)
-
-#### Development Testing Images
-
-For testing purposes, you can:
-
-1. **Add sample images** to `public/uploads/courses/`:
-   - business.jpg, programming.jpg, design.jpg, etc.
-
-2. **Use placeholder services**:
-   - Random images: `https://picsum.photos/400/300`
-   - Branded placeholders: `https://via.placeholder.com/400x300/FFD700/000000?text=Course`
-
-#### Production Deployment Options
-
-**Option 1: Azure Blob Storage (Recommended)**
-- Service: Azure Storage Account with Blob containers
-- CDN: Azure CDN for global content delivery
-- Cost: ~$90/month for moderate usage
-- Benefits: Scalable, secure, globally distributed
-
-**Option 2: Azure App Service File System**
-- Service: Direct file storage on App Service
-- Limitations: Files lost during deployments
-- Not recommended for production
-
-**Option 3: Azure Files**
-- Service: SMB file shares in the cloud
-- Mount: Can be mounted to App Service
-- Persistence: Data persists across deployments
-
-**Security Features:**
-- File type validation and sanitization
-- Size limit enforcement
-- Secure file naming and path handling
-- Access control based on user permissions
-
-## 🚢 Deployment
-
-### Docker Production Deployment
-
-```bash
-# Build production images
-docker-compose -f docker-compose.prod.yml build
-
-# Start production stack
-docker-compose -f docker-compose.prod.yml up -d
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-```
-
-### Environment Variables for Production
-
-```env
-NODE_ENV=production
-DATABASE_URL="postgresql://user:pass@host:5432/db"
-JWT_SECRET="production_secret_key"
-PORT=3000
-```
-
-## 🎓 Demo Credentials
+### Demo Credentials
 
 After running the setup script, you can use these credentials:
 
-### Admin Account
+**Admin Account:**
 - **Email**: admin@grocademy.com
 - **Password**: admin123
-- **Access**: Full admin privileges
+- **Access**: Full admin privileges, can manage users and courses
 
-### Student Account
+**Student Account:**
 - **Email**: john.doe@example.com
 - **Password**: password123
-- **Access**: Regular user access
+- **Access**: Regular user access, can purchase and view courses
 
 ## 🐛 Troubleshooting
 
@@ -555,6 +688,20 @@ docker-compose logs db
 docker-compose exec app npx prisma migrate status
 ```
 
+### Google OAuth Issues
+
+**"redirect_uri_mismatch" error:**
+- Verify callback URL in Google Console matches your `.env` file
+- Ensure exact URL match: `http://127.0.0.1:3000/auth/google/callback`
+
+**"invalid_client" error:**
+- Check `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are correct
+- Verify OAuth consent screen is properly configured
+
+**OAuth not working:**
+- Check if Google APIs are enabled in your project
+- Verify environment variables are loaded correctly
+
 ### Local Development Issues
 
 **Port already in use:**
@@ -576,288 +723,6 @@ npm run build
 npm run build:css:prod
 ```
 
-## 📊 Performance & Security
-
-### Implemented Features
-- **Input validation** with class-validator
-- **SQL injection protection** via Prisma ORM
-- **JWT token authentication** with expiration
-- **File upload validation** and size limits
-- **CORS configuration** for cross-origin requests
-- **Environment variable** security
-- **Password hashing** with bcrypt
-
-### Performance Optimizations
-- **Database indexing** on frequently queried fields
-- **Pagination** for large datasets
-- **Eager/lazy loading** optimization
-- **Static file caching** headers
-- **Compressed responses** (gzip)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -am 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Submit a pull request
-
-## 📄 License
-
-This project is developed for educational purposes as part of the Grocademy platform specification.
-
----
-
-## 📞 Support
-
-For questions and support:
-- Check the troubleshooting section above
-- Review the API documentation
-- Examine the demo credentials and test data
-
-**🎉 Happy Learning with Grocademy! 🍌**
-POSTGRES_PASSWORD=your_postgres_password
-POSTGRES_DB=grocademy
-DATABASE_URL="postgresql://postgres:your_postgres_password@localhost:5432/grocademy?schema=public"
-
-# JWT Secret for Authentication
-JWT_SECRET=your_super_secret_jwt_key_here
-
-# Application Port
-PORT=3000
-```
-
-#### 2. Installation & Setup
-
-```bash
-# Install dependencies
-npm install
-
-# Generate Prisma client
-npx prisma generate
-
-# Run database migrations
-npx prisma migrate dev --name init
-
-# Seed the database
-npx prisma db seed
-
-# Build CSS for frontend
-npm run build:css:prod
-
-# Build the application
-npm run build
-
-# Start the application
-npm run start:prod
-```
-
-## 🏗️ Project Structure
-
-```
-grocademy-api/
-├── src/
-│   ├── backend/           # NestJS backend API
-│   │   ├── auth/          # Authentication module
-│   │   ├── users/         # User management
-│   │   ├── courses/       # Course management
-│   │   ├── modules/       # Module management
-│   │   ├── prisma/        # Prisma service
-│   │   ├── app.module.ts  # Main application module
-│   │   └── main.ts        # Application entry point
-│   └── frontend/          # Static frontend files
-│       ├── index.html     # Main landing page
-│       ├── css/           # Styled with Tailwind CSS
-│       ├── js/            # Frontend JavaScript
-│       └── public/        # Static assets
-├── prisma/
-│   ├── schema.prisma      # Database schema
-│   └── migrations/        # Database migrations
-├── docker-compose.yml     # Docker setup
-├── Dockerfile            # Container configuration
-└── README.md             # This file
-```
-
-## 🔗 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login (accepts identifier: email or username)
-- `GET /api/auth/self` - Get current user profile (requires JWT)
-
-### Users (Admin only)
-- `GET /api/users` - List all users with search and pagination
-- `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user
-- `POST /api/users/:id/balance` - Add balance to user
-
-### Courses
-- `GET /api/courses` - List all courses with search and pagination
-- `GET /api/courses/:id` - Get course by ID
-- `POST /api/courses` - Create course (admin only)
-- `PUT /api/courses/:id` - Update course (admin only)
-- `DELETE /api/courses/:id` - Delete course (admin only)
-- `POST /api/courses/:id/buy` - Purchase course
-- `GET /api/courses/my-courses` - Get user's purchased courses
-- `GET /api/courses/:courseId/modules` - Get modules for a course
-- `POST /api/courses/:courseId/modules` - Add module to course (admin only)
-
-### Modules
-- `GET /api/modules/:id` - Get individual module (requires course purchase)
-- `PUT /api/modules/:id` - Update module (admin only)
-- `DELETE /api/modules/:id` - Delete module (admin only)
-- `PATCH /api/modules/:id/complete` - Mark module as complete
-- `PATCH /api/modules/reorder` - Reorder modules (admin only)
-
-## 🧪 Testing the Application
-
-### Frontend Access
-Visit http://localhost:3000 to access the main Grocademy frontend interface.
-
-### API Testing
-
-#### Health Check
-```bash
-curl http://localhost:3000/api
-```
-
-#### Register a User
-```bash
-curl -X POST http://localhost:3000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "username": "testuser",
-    "firstName": "Test",
-    "lastName": "User",
-    "password": "password123"
-  }'
-```
-
-#### Login
-```bash
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "identifier": "testuser",
-    "password": "password123"
-  }'
-```
-
-#### Get Courses
-```bash
-curl http://localhost:3000/courses
-```
-
-## 📝 Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run build` | Build both CSS and TypeScript |
-| `npm run build:css` | Build CSS in watch mode |
-| `npm run build:css:prod` | Build minified CSS for production |
-| `npm run start:prod` | Start the compiled application |
-| `npm run start:dev` | Start in development mode with file watching |
-| `npm run lint` | Run ESLint |
-| `npm run format` | Format code with Prettier |
-| `npm run test` | Run unit tests |
-
-## 🗃️ Database Schema
-
-### Models
-- **User** - User accounts with authentication
-- **Course** - Course information with categories
-- **Module** - Course modules with content
-- **UserCourse** - User course purchases
-- **ModuleCompletion** - User module progress
-- **Certificate** - Course completion certificates
-
-### Course Categories
-- BUSINESS, COMPUTER_SCIENCE, DATA_SCIENCE
-- ARTIFICIAL_INTELLIGENCE, INFORMATION_TECHNOLOGY
-- SOCIAL_SCIENCE, PHYSICAL_SCIENCE, PERSONAL_DEVELOPMENT
-- ARTS, LANGUAGE
-
-## 🛠️ Development Notes
-
-- **Frontend Integration**: Static files served from `/src/frontend/`
-- **API Prefix**: All API routes prefixed with `/api`
-- **Root Route**: Serves the main `index.html` frontend
-- **TypeScript**: Custom source structure with `src/backend/` as root
-- **Docker**: Multi-stage build with production optimization
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JWT with Passport integration
-
-## 🛠️ Troubleshooting
-
-### Docker Environment Issues
-
-#### Cannot connect to Docker
-- Ensure Docker Desktop is running
-- Check Docker service status
-
-#### Database Connection Issues
-```bash
-# Check if containers are running
-docker-compose ps
-
-# Check database logs
-docker-compose logs db
-
-# Reset everything
-docker-compose down -v
-.\docker-seed.ps1
-```
-
-### Local Development Issues
-
-#### Port Already in Use
-```bash
-# Add to .env file
-PORT=3001
-```
-
-#### Module Not Found Errors
-```bash
-# Regenerate Prisma client
-npx prisma generate
-npm run build
-```
-
-#### Frontend Not Loading
-- Ensure CSS is built: `npm run build:css:prod`
-- Check frontend files exist in `src/frontend/`
-- Verify static file serving in `main.ts`
-
-## 📦 Tech Stack
-
-- **Backend Framework:** NestJS
-- **Database:** PostgreSQL
-- **ORM:** Prisma
-- **Authentication:** JWT with Passport
-- **Frontend:** Vanilla HTML/CSS/JS with Tailwind CSS
-- **Validation:** class-validator
-- **File Upload:** Multer
-- **Language:** TypeScript
-- **Containerization:** Docker & Docker Compose
-
-## 🎉 Default Login Credentials
-
-After seeding the database:
-
-**Admin Account:**
-- Email: `admin@grocademy.com`
-- Password: `admin123`
-
-**Regular User:**
-- Email: `john.doe@email.com`
-- Password: `password123`
-
-## 📄 License
-
-This project is part of the Grocademy platform development for educational purposes.
-
 ---
 
 ## ⚡ Quick Commands Summary
@@ -878,4 +743,36 @@ docker-compose down -v     # Delete all data
 .\docker-seed.ps1          # Fresh setup
 ```
 
-🎉 **Your application will be running at `http://localhost:3000`**
+**Test Google OAuth:**
+```bash
+# 1. Configure Google OAuth credentials in .env
+# 2. Start application
+docker-compose up --build
+# 3. Visit http://127.0.0.1:3000/auth.html
+# 4. Click "Sign in with Google"
+```
+
+## 📋 Project Requirements Fulfilled
+
+**Core Requirements (F01-F03):**
+- ✅ **F01 - Monolith FE**: Complete frontend with all required pages
+- ✅ **F02 - Monolith BE**: Full backend with authentication and business logic  
+- ✅ **F03 - REST API**: Complete API for external admin interface
+
+**Design Patterns & Architecture:**
+- ✅ **3+ Design Patterns**: Strategy, Repository, Dependency Injection, MVC
+- ✅ **OOP Implementation**: Full object-oriented design with NestJS
+- ✅ **Docker Integration**: Complete containerization with docker-compose
+
+**Bonus Features Implemented:**
+- ✅ **B08 - SOLID**: Comprehensive SOLID principles implementation
+- ✅ **B10 - OAuth**: Google authentication integration  
+- ✅ **B06 - Responsive**: Mobile-first responsive design
+
+## 📄 License
+
+This project is developed for educational purposes as part of the Labpro (Programming Lab) selection for the 2025 batch.
+
+---
+
+🎉 **Your application will be running at `http://127.0.0.1:3000`**

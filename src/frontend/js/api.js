@@ -126,20 +126,6 @@ class ApiService {
         return await this.request('/auth/self');
     }
 
-    async updateProfile(profileData) {
-        return await this.request('/auth/profile', {
-            method: 'PUT',
-            body: JSON.stringify(profileData)
-        });
-    }
-
-    async updatePassword(passwordData) {
-        return await this.request('/auth/password', {
-            method: 'PUT',
-            body: JSON.stringify(passwordData)
-        });
-    }
-
     async getCourses(page = 1, limit = 10, search = '', category = '') {
         const params = new URLSearchParams({
             page: page.toString(),

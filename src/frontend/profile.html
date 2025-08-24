@@ -69,48 +69,9 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Edit Username Form -->
-                <div class="card p-6">
-                    <h3 class="text-lg font-semibold mb-4">Change Username</h3>
-                    <form id="usernameForm" class="space-y-4">
-                        <div>
-                            <label for="newUsername" class="block text-sm font-medium mb-2">New Username</label>
-                            <input type="text" id="newUsername" name="newUsername" 
-                                   class="input w-full" placeholder="Enter new username" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Username</button>
-                    </form>
-                </div>
-
-                <!-- Change Password Form -->
-                <div class="card p-6">
-                    <h3 class="text-lg font-semibold mb-4">Change Password</h3>
-                    <form id="passwordForm" class="space-y-4">
-                        <div>
-                            <label for="currentPassword" class="block text-sm font-medium mb-2">Current Password</label>
-                            <input type="password" id="currentPassword" name="currentPassword" 
-                                   class="input w-full" placeholder="Enter current password" required>
-                        </div>
-                        <div>
-                            <label for="newPassword" class="block text-sm font-medium mb-2">New Password</label>
-                            <input type="password" id="newPassword" name="newPassword" 
-                                   class="input w-full" placeholder="Enter new password" required>
-                        </div>
-                        <div>
-                            <label for="confirmPassword" class="block text-sm font-medium mb-2">Confirm New Password</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" 
-                                   class="input w-full" placeholder="Confirm new password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Password</button>
-                    </form>
-                </div>
             </div>
         </div>
     </main>
-
-    <!-- Toast Container -->
-    <div id="toast-container"></div>
 
     <script src="js/api.js"></script>
     <script>
@@ -153,97 +114,6 @@
                 showToast('Failed to load profile information.', 'error');
                 spinner.classList.add('hidden');
             }
-        }
-
-        function setupEventListeners() {
-            document.getElementById('usernameForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await updateUsername();
-            });
-
-            document.getElementById('passwordForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await updatePassword();
-            });
-        }
-
-        async function updateUsername() {
-            const newUsername = document.getElementById('newUsername').value.trim();
-            
-            if (!newUsername) {
-                showToast('Please enter a new username.', 'error');
-                return;
-            }
-
-            try {
-                await api.updateProfile({ username: newUsername });
-                showToast('Username updated successfully!', 'success');
-                document.getElementById('displayUsername').textContent = newUsername;
-                document.getElementById('newUsername').value = '';
-            } catch (error) {
-                console.error('Failed to update username:', error);
-                showToast('Failed to update username. It may already be taken.', 'error');
-            }
-        }
-
-        async function updatePassword() {
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                showToast('Please fill in all password fields.', 'error');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                showToast('New passwords do not match.', 'error');
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                showToast('New password must be at least 6 characters long.', 'error');
-                return;
-            }
-
-            try {
-                await api.updatePassword({
-                    currentPassword,
-                    newPassword
-                });
-                
-                showToast('Password updated successfully!', 'success');
-                document.getElementById('passwordForm').reset();
-            } catch (error) {
-                console.error('Failed to update password:', error);
-                showToast('Failed to update password. Please check your current password.', 'error');
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgColor = type === 'success' ? 'bg-green-500' : 
-                           type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            
-            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg mb-2 transform transition-transform duration-300 translate-x-full`;
-            toast.textContent = message;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-            }, 100);
-            
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                setTimeout(() => {
-                    if (container.contains(toast)) {
-                        container.removeChild(toast);
-                    }
-                }, 300);
-            }, 3000);
         }
     </script>
 </body>

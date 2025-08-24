@@ -120,53 +120,6 @@ export class AuthService {
     };
   }
 
-  async updateProfile(userId: string, updateData: { username?: string; firstName?: string; lastName?: string }) {
-    if (updateData.username) {
-      const existingUser = await this.prisma.user.findUnique({
-        where: { username: updateData.username },
-      });
-      
-      if (existingUser && existingUser.id !== userId) {
-        throw new ConflictException('Username already taken.');
-      }
-    }
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-    });
-
-    const { password: _, ...userWithoutPassword } = updatedUser;
-    return {
-      ...userWithoutPassword,
-      balance: userWithoutPassword.balance / 100,
-    };
-  }
-
-  async updatePassword(userId: string, passwordData: { currentPassword: string; newPassword: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found.');
-    }
-
-    const isCurrentPasswordValid = await bcrypt.compare(passwordData.currentPassword, user.password);
-    if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect.');
-    }
-
-    const hashedNewPassword = await bcrypt.hash(passwordData.newPassword, 10);
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedNewPassword },
-    });
-
-    return { message: 'Password updated successfully.' };
-  }
-
   async validateGoogleUser(googleUser: any) {
     const { googleId, email, firstName, lastName, picture } = googleUser;
 
