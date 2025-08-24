@@ -166,4 +166,59 @@ export class AuthService {
 
     return { message: 'Password updated successfully.' };
   }
+
+  async validateGoogleUser(googleUser: any) {
+    const { googleId, email, firstName, lastName, picture } = googleUser;
+
+    // Check if user exists by email or Google ID
+    let user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { googleId },
+        ],
+      },
+    });
+
+    if (user) {
+      // User exists, update Google ID if not set
+      if (!user.googleId) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { googleId },
+        });
+      }
+    } else {
+      // Create new user
+      const username = email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
+      
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          username,
+          firstName,
+          lastName,
+          googleId,
+          password: '', // Google users don't need a password
+          picture,
+        },
+      });
+    }
+
+    // Generate JWT token
+    const payload = { sub: user.id, username: user.username };
+    const token = this.jwtService.sign(payload);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        picture: user.picture,
+      },
+      token,
+    };
+  }
 }

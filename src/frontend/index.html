@@ -71,11 +71,11 @@
 
                     <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div class="text-4xl font-extrabold text-primary mb-1">10+</div>
+                            <div id="coursesCount" class="text-4xl font-extrabold text-primary mb-1">Loading...</div>
                             <div class="text-muted-foreground">Courses Available</div>
                         </div>
                         <div>
-                            <div class="text-4xl font-extrabold text-primary mb-1">5</div>
+                            <div id="categoriesCount" class="text-4xl font-extrabold text-primary mb-1">Loading...</div>
                             <div class="text-muted-foreground">Categories</div>
                         </div>
                         <div>
@@ -100,9 +100,24 @@
 
     <script src="js/api.js"></script>
     <script>
-        if (isAuthenticated()) {
-            window.location.href = 'courses.html';
-        }
+        // Load homepage statistics
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await api.getHomepageStatistics();
+                
+                if (data.status === 'success') {
+                    document.getElementById('coursesCount').textContent = data.data.display_courses;
+                    document.getElementById('categoriesCount').textContent = data.data.total_categories;
+                } else {
+                    document.getElementById('coursesCount').textContent = '10+';
+                    document.getElementById('categoriesCount').textContent = '5';
+                }
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+                document.getElementById('coursesCount').textContent = '10+';
+                document.getElementById('categoriesCount').textContent = '5';
+            }
+        });
     </script>
 </body>
 </html>

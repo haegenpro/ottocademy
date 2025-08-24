@@ -9,6 +9,7 @@ import { CoursesModule } from './courses/courses.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ModulesModule } from './modules/modules.module';
 import { CertificatesModule } from './certificates/certificates.module';
+import { StatisticsModule } from './statistics/statistics.module';
 import { multerConfig } from './config/multer.config';
 
 @Module({
@@ -23,6 +24,7 @@ import { multerConfig } from './config/multer.config';
     MulterModule.register(multerConfig),
     ModulesModule,
     CertificatesModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

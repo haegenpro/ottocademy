@@ -18,6 +18,8 @@ model User {
   password  String
   balance   Int      @default(0)
   isAdmin   Boolean  @default(false)
+  googleId  String?  @unique
+  picture   String?
 
   purchasedCourses UserCourse[]
   moduleCompletions ModuleCompletion[]

@@ -56,7 +56,11 @@ class ApiService {
     }
 
     async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
+        // Auth endpoints don't use the /api prefix (they're excluded in main.ts)
+        const isAuthEndpoint = endpoint.startsWith('/auth');
+        const baseUrl = isAuthEndpoint ? 'http://127.0.0.1:3000' : API_BASE_URL;
+        const url = `${baseUrl}${endpoint}`;
+        
         const config = {
             headers: this.getHeaders(),
             ...options
@@ -187,7 +191,8 @@ class ApiService {
     }
 
     async downloadCertificate(courseId) {
-        const response = await fetch(`${API_BASE_URL}/certificates/course/${courseId}/download`, {
+        const baseUrl = API_BASE_URL;
+        const response = await fetch(`${baseUrl}/certificates/course/${courseId}/download`, {
             headers: this.getHeaders()
         });
         
@@ -199,11 +204,15 @@ class ApiService {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `certificate-${courseId}.pdf`;
+        a.download = `certificate-${courseId}.html`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+    }
+
+    async getHomepageStatistics() {
+        return await this.request('/statistics/homepage');
     }
 }
 

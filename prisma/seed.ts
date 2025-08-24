@@ -27,6 +27,8 @@ async function main() {
       password: adminPassword,
       isAdmin: true,
       balance: 1000000,
+      googleId: null,
+      picture: null,
     },
   });
   console.log(`Created admin user: ${admin.email}`);
@@ -41,6 +43,8 @@ async function main() {
         lastName: 'Doe',
         password: userPassword,
         balance: 15000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -51,6 +55,8 @@ async function main() {
         lastName: 'Smith',
         password: userPassword,
         balance: 20000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -61,6 +67,8 @@ async function main() {
         lastName: 'Johnson',
         password: userPassword,
         balance: 7500,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -71,6 +79,8 @@ async function main() {
         lastName: 'Williams',
         password: userPassword,
         balance: 30000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -81,6 +91,8 @@ async function main() {
         lastName: 'Brown',
         password: userPassword,
         balance: 12500,
+        googleId: null,
+        picture: null,
       },
     }),
   ]);

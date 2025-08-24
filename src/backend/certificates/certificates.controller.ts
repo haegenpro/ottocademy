@@ -33,7 +33,7 @@ export class CertificatesController {
 
     res.set({
       'Content-Type': mimeType,
-      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
     });
 
     return html;

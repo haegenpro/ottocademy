@@ -30,7 +30,14 @@ async function bootstrap() {
         'course-detail.html',
         'module.html',
         'my-courses.html',
-        'profile.html'
+        'profile.html',
+        'auth/google',
+        'auth/google/callback',
+        'auth/login',
+        'auth/register',
+        'auth/self',
+        'auth/profile',
+        'auth/password'
       ]
     });
     

@@ -75,6 +75,7 @@ if ($appStatus -eq "running") {
     Write-Host "📋 Environment Summary:" -ForegroundColor Cyan
     Write-Host "======================" -ForegroundColor Cyan
     Write-Host "🌐 API URL:          http://localhost:3000" -ForegroundColor White
+    Write-Host "    Alternative:     http://127.0.0.1:3000" -ForegroundColor White
     Write-Host "📚 API Docs:         http://localhost:3000/api" -ForegroundColor White
     Write-Host "🗄️  Database:        PostgreSQL on port 5432" -ForegroundColor White
     Write-Host ""

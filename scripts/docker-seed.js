@@ -31,6 +31,8 @@ async function main() {
       password: hashedAdminPassword,
       isAdmin: true,
       balance: 1000000,
+      googleId: null,
+      picture: null,
     },
   });
 
@@ -43,6 +45,8 @@ async function main() {
         lastName: 'Doe',
         password: hashedUserPassword,
         balance: 15000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -53,6 +57,8 @@ async function main() {
         lastName: 'Smith',
         password: hashedUserPassword,
         balance: 20000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -63,6 +69,8 @@ async function main() {
         lastName: 'Johnson',
         password: hashedUserPassword,
         balance: 7500,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -73,6 +81,8 @@ async function main() {
         lastName: 'Williams',
         password: hashedUserPassword,
         balance: 30000,
+        googleId: null,
+        picture: null,
       },
     }),
     prisma.user.create({
@@ -83,6 +93,8 @@ async function main() {
         lastName: 'Brown',
         password: hashedUserPassword,
         balance: 12500,
+        googleId: null,
+        picture: null,
       },
     }),
   ]);

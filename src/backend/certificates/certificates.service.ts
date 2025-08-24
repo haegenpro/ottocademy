@@ -6,7 +6,6 @@ export class CertificatesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getCertificate(courseId: string, userId: string) {
-    // Check if user has purchased the course
     const userCourse = await this.prisma.userCourse.findUnique({
       where: {
         userId_courseId: {
@@ -27,7 +26,6 @@ export class CertificatesService {
       throw new BadRequestException('Course not purchased');
     }
 
-    // Get all module completions for this user and course
     const moduleCompletions = await this.prisma.moduleCompletion.findMany({
       where: {
         userId,
@@ -37,7 +35,6 @@ export class CertificatesService {
       },
     });
 
-    // Calculate completion percentage
     const totalModules = userCourse.course.modules.length;
     const completedModules = moduleCompletions.filter(completion => completion.isCompleted).length;
     const completionPercentage = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
@@ -46,7 +43,6 @@ export class CertificatesService {
       throw new BadRequestException('Course not completed yet');
     }
 
-    // Check if certificate already exists
     let certificate = await this.prisma.certificate.findUnique({
       where: {
         userId_courseId: {
@@ -60,7 +56,6 @@ export class CertificatesService {
       },
     });
 
-    // If not exists, create it
     if (!certificate) {
       certificate = await this.createCertificate(courseId, userId);
     }
@@ -71,7 +66,6 @@ export class CertificatesService {
   async downloadCertificate(courseId: string, userId: string) {
     const certificate = await this.getCertificate(courseId, userId);
     
-    // Generate HTML certificate
     const htmlContent = this.generateCertificateHTML(certificate);
     
     return {
