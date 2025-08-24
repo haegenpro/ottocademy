@@ -56,7 +56,6 @@ class ApiService {
     }
 
     async request(endpoint, options = {}) {
-        // Auth endpoints don't use the /api prefix (they're excluded in main.ts)
         const isAuthEndpoint = endpoint.startsWith('/auth');
         const baseUrl = isAuthEndpoint ? 'http://127.0.0.1:3000' : API_BASE_URL;
         const url = `${baseUrl}${endpoint}`;
@@ -102,11 +101,9 @@ class ApiService {
             body: JSON.stringify({ identifier: email, password })
         });
         
-        // Handle new response format
         if (response.status === 'success' && response.data && response.data.token) {
             this.setToken(response.data.token);
         } else if (response.access_token) {
-            // Fallback for old format
             this.setToken(response.access_token);
         }
         
@@ -206,7 +203,6 @@ class ApiService {
         return await this.request('/statistics/homepage');
     }
 
-    // Admin User Management Functions
     async getUsers(page = 1, limit = 10, search = '') {
         const params = new URLSearchParams({
             page: page.toString(),

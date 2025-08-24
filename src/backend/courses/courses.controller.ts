@@ -122,9 +122,10 @@ export class CoursesController {
     @Query('limit') limit?: string,
   ) {
     const userId = req.user.id;
+    const isAdmin = req.user.isAdmin || false;
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.getCourseModules(courseId, userId, pageNumber, limitNumber);
+    return this.coursesService.getCourseModules(courseId, userId, pageNumber, limitNumber, isAdmin);
   }
 
   @UseGuards(AdminGuard)

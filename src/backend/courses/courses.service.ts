@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ConflictException, ForbiddenException } 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import * as fs from 'fs/promises';
+import { deleteFileFromGCS } from '../gcs.helper';
 
 @Injectable()
 export class CoursesService {
@@ -125,7 +125,12 @@ export class CoursesService {
   }
 
   async remove(id: string) {
-    const course = await this.prisma.course.findUnique({ where: { id } });
+    const course = await this.prisma.course.findUnique({ 
+      where: { id },
+      include: {
+        modules: true,
+      },
+    });
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
@@ -155,10 +160,15 @@ export class CoursesService {
     });
 
     if (course.thumbnail_image) {
-      try {
-        await fs.unlink(course.thumbnail_image);
-      } catch (error) {
-        console.log(`Thumbnail file not found for course ${id}, skipping deletion`);
+      await deleteFileFromGCS(course.thumbnail_image);
+    }
+
+    for (const module of course.modules) {
+      if (module.pdf_content) {
+        await deleteFileFromGCS(module.pdf_content);
+      }
+      if (module.video_content) {
+        await deleteFileFromGCS(module.video_content);
       }
     }
 
@@ -296,13 +306,15 @@ export class CoursesService {
     };
   }
 
-  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15) {
-    const userCourse = await this.prisma.userCourse.findUnique({
-      where: { userId_courseId: { userId, courseId } },
-    });
+  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15, isAdmin: boolean = false) {
+    if (!isAdmin) {
+      const userCourse = await this.prisma.userCourse.findUnique({
+        where: { userId_courseId: { userId, courseId } },
+      });
 
-    if (!userCourse) {
-      throw new ForbiddenException('You have not purchased this course.');
+      if (!userCourse) {
+        throw new ForbiddenException('You have not purchased this course.');
+      }
     }
 
     const skip = (page - 1) * limit;

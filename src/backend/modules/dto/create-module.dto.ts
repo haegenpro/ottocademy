@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString, IsInt, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, Min, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateModuleDto {
   @IsString()
@@ -9,7 +10,9 @@ export class CreateModuleDto {
   @IsNotEmpty()
   description: string;
 
+  @IsOptional()
+  @Transform(({ value }) => value ? parseInt(value, 10) : undefined)
   @IsInt()
   @Min(1)
-  order: number;
+  order?: number;
 }

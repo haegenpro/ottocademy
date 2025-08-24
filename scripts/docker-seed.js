@@ -113,7 +113,7 @@ async function main() {
       price: 8999,
       topics: ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'MongoDB'],
       category: 'INFORMATION_TECHNOLOGY',
-      thumbnail_image: 'uploads/courses/web-dev-bootcamp.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -125,7 +125,7 @@ async function main() {
       price: 7999,
       topics: ['Python Basics', 'OOP', 'Django', 'Data Science', 'Machine Learning', 'Automation'],
       category: 'COMPUTER_SCIENCE',
-      thumbnail_image: 'uploads/courses/python-masterclass.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -137,7 +137,7 @@ async function main() {
       price: 9499,
       topics: ['React Native', 'Mobile UI', 'Navigation', 'API Integration', 'Publishing', 'Performance'],
       category: 'INFORMATION_TECHNOLOGY',
-      thumbnail_image: 'uploads/courses/react-native-course.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -150,7 +150,7 @@ async function main() {
       price: 6999,
       topics: ['Excel Advanced', 'SQL', 'Data Visualization', 'Statistics', 'Dashboards', 'Reporting'],
       category: 'DATA_SCIENCE',
-      thumbnail_image: 'uploads/courses/data-analytics.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -162,7 +162,7 @@ async function main() {
       price: 10999,
       topics: ['Supervised Learning', 'Unsupervised Learning', 'Neural Networks', 'Python', 'TensorFlow', 'Scikit-learn'],
       category: 'DATA_SCIENCE',
-      thumbnail_image: 'uploads/courses/machine-learning-az.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -175,7 +175,7 @@ async function main() {
       price: 5999,
       topics: ['SEO', 'Social Media', 'Email Marketing', 'Google Ads', 'Analytics', 'Content Marketing'],
       category: 'BUSINESS',
-      thumbnail_image: 'uploads/courses/digital-marketing.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -187,7 +187,7 @@ async function main() {
       price: 8499,
       topics: ['Business Planning', 'Market Research', 'Funding', 'Product Development', 'Marketing', 'Leadership'],
       category: 'BUSINESS',
-      thumbnail_image: 'uploads/courses/entrepreneurship.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -200,7 +200,7 @@ async function main() {
       price: 3999,
       topics: ['Time Management', 'Productivity', 'Goal Setting', 'Habits', 'Focus', 'Organization'],
       category: 'PERSONAL_DEVELOPMENT',
-      thumbnail_image: 'uploads/courses/productivity.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -213,7 +213,7 @@ async function main() {
       price: 4999,
       topics: ['Business English', 'Communication', 'Presentations', 'Meetings', 'Writing', 'Speaking'],
       category: 'LANGUAGE',
-      thumbnail_image: 'uploads/courses/business-english.jpg',
+      thumbnail_image: null,
     },
   });
 
@@ -226,7 +226,7 @@ async function main() {
       price: 5499,
       topics: ['Photography', 'Composition', 'Lighting', 'Camera Settings', 'Photo Editing', 'Lightroom'],
       category: 'ARTS',
-      thumbnail_image: 'uploads/courses/photography.jpg',
+      thumbnail_image: null,
     },
   });
 

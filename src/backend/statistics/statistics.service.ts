@@ -7,16 +7,13 @@ export class StatisticsService {
 
   async getHomepageStatistics() {
     try {
-      // Get total courses count
       const totalCourses = await this.prisma.course.count();
       
-      // Get unique categories count
       const uniqueCategories = await this.prisma.course.findMany({
         select: { category: true },
         distinct: ['category'],
       });
       
-      // Round down courses to nearest 10
       const roundedCourses = Math.floor(totalCourses / 10) * 10;
       
       return {

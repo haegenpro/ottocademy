@@ -100,7 +100,6 @@ export class UsersService {
 
     const updateData: any = { ...updateUserDto };
     
-    // Map frontend field names to database field names
     if (updateUserDto.first_name) {
       updateData.firstName = updateUserDto.first_name;
       delete updateData.first_name;
@@ -154,8 +153,22 @@ export class UsersService {
       throw new ForbiddenException('Cannot delete another admin user');
     }
 
-    await this.prisma.user.delete({
-      where: { id },
+    await this.prisma.$transaction(async (prisma) => {
+      await prisma.certificate.deleteMany({
+        where: { userId: id },
+      });
+
+      await prisma.moduleCompletion.deleteMany({
+        where: { userId: id },
+      });
+
+      await prisma.userCourse.deleteMany({
+        where: { userId: id },
+      });
+
+      await prisma.user.delete({
+        where: { id },
+      });
     });
 
     return { 

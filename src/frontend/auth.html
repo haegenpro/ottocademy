@@ -191,32 +191,27 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             
-            // Check for OAuth callback parameters
             const urlParams = new URLSearchParams(window.location.search);
             const oauthStatus = urlParams.get('oauth');
             const token = urlParams.get('token');
             const errorMessage = urlParams.get('message');
             
             if (oauthStatus === 'success' && token) {
-                // Store the token using the API service
                 api.setToken(decodeURIComponent(token));
                 
                 showMessage('Google login successful! Redirecting...', 'success');
                 
-                // Clean the URL to remove sensitive token parameter
                 window.history.replaceState({}, document.title, window.location.pathname);
                 
                 setTimeout(() => { 
                     window.location.href = 'courses.html'; 
                 }, 1000);
             } else if (oauthStatus === 'success') {
-                // Success but no token (shouldn't happen)
                 showMessage('Login successful but no authentication token received. Please try again.', 'error');
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (oauthStatus === 'error') {
                 const message = errorMessage ? decodeURIComponent(errorMessage) : 'Google login failed. Please try again or use email/password.';
                 showMessage(message, 'error');
-                // Clean URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
@@ -259,7 +254,7 @@
                 username: document.getElementById('registerUsername').value.trim(),
                 email: document.getElementById('registerEmail').value.trim(),
                 password: document.getElementById('registerPassword').value,
-                confirmPassword: document.getElementById('registerPassword').value, // Add confirm password
+                confirmPassword: document.getElementById('registerPassword').value,
             };
 
             if (Object.values(userData).some(field => !field)) {
@@ -316,8 +311,6 @@
         }
 
         function handleGoogleAuth() {
-            // Simply navigate to the Google OAuth endpoint
-            // The backend will handle validation and redirect to Google
             window.location.href = '/auth/google';
         }
     </script>
