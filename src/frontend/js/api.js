@@ -56,10 +56,7 @@ class ApiService {
     }
 
     async request(endpoint, options = {}) {
-        // Auth endpoints don't use the /api prefix (they're excluded in main.ts)
-        const isAuthEndpoint = endpoint.startsWith('/auth');
-        const baseUrl = isAuthEndpoint ? 'http://127.0.0.1:3000' : API_BASE_URL;
-        const url = `${baseUrl}${endpoint}`;
+        const url = `${API_BASE_URL}${endpoint}`;
         
         const config = {
             headers: this.getHeaders(),
