@@ -19,7 +19,12 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        projectService: {
+          // tsconfig.json excludes /test, so files under it (e2e + integration
+          // specs) have no matching tsconfig project - fall back to a default
+          // program for them instead of failing to parse.
+          allowDefaultProject: ['test/*.ts', 'test/integration/*.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

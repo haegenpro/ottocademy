@@ -1,0 +1,19 @@
+services:
+  # Ephemeral Postgres used ONLY for integration tests. Separate from the
+  # dev `db` service in docker-compose.yml on purpose: no named volume, so
+  # it starts empty and is safe to throw away after every run.
+  test-db:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=grocademy_test
+    ports:
+      - '5433:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U test -d grocademy_test']
+      interval: 2s
+      timeout: 5s
+      retries: 10

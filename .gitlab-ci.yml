@@ -1,0 +1,148 @@
+# CI skeleton for the ops-course assignment.
+#
+# Design goals this file is built around:
+#   - fail fast, fail loud   -> `set -eo pipefail` everywhere, retry: 0,
+#                                no `allow_failure: true` on real checks,
+#                                loud banners printed on failure.
+#   - feedback loop          -> junit reports feed GitLab's Test Summary
+#                                widget on every MR; coverage % surfaced
+#                                on the pipeline; failing stage blocks
+#                                the image from ever being built.
+#   - parallel stages        -> lint / unit-test / integration-test all
+#                                live in the same `test` stage, so GitLab
+#                                runs them concurrently instead of in
+#                                sequence.
+#   - immutable artifacts    -> the docker image is built exactly once,
+#                                tagged with the immutable commit SHA
+#                                (never "latest"-only), and that same
+#                                tag is what a later deploy stage would
+#                                promote across environments.
+#   - integration test,      -> auth.integration-spec.ts drives
+#     realistic deps,           AuthService -> PrismaService -> a REAL
+#     no external API           Postgres service container directly (no
+#                                HTTP layer, no Google OAuth/GCS calls).
+
+stages:
+  - verify
+  - build
+
+workflow:
+  rules:
+    # Avoid duplicate pipelines: run on MRs, and on pushes to branches
+    # that don't have an open MR yet (e.g. direct pushes to master).
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS == null'
+
+default:
+  image: node:20-alpine
+  interruptible: true   # a newer push cancels an in-flight pipeline instead of racing it
+  retry: 0               # never silently retry - a flaky pass would hide a real bug
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  before_script:
+    - set -eo pipefail
+    - npm ci --cache .npm --prefer-offline
+
+variables:
+  npm_config_cache: '$CI_PROJECT_DIR/.npm'
+  # Test-only secrets. Override JWT_SECRET etc. via masked CI/CD variables
+  # for anything that isn't throwaway.
+  JWT_SECRET: 'ci-test-secret-do-not-use-in-prod'
+
+# ---------------------------------------------------------------------------
+# verify stage - lint, unit tests, integration tests all run IN PARALLEL
+# ---------------------------------------------------------------------------
+
+lint:
+  stage: verify
+  script:
+    - set -eo pipefail
+    - echo "== Running ESLint =="
+    - npx eslint "{src,test}/**/*.ts" --max-warnings=0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS == null'
+
+unit-test:
+  stage: verify
+  script:
+    - set -eo pipefail
+    - echo "== Running unit tests =="
+    - npx jest --ci --coverage
+  coverage: '/All files[^|]*\|[^|]*\s+([\d.]+)/'
+  artifacts:
+    when: always          # keep the report even when the job fails - that's the point
+    reports:
+      junit: reports/unit.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS == null'
+
+integration-test:
+  stage: verify
+  # Real Postgres, provisioned by GitLab as a linked service container -
+  # this is the "realistic dependency" the integration tests run against.
+  # No Google OAuth / GCS calls are made anywhere in this job.
+  services:
+    - name: postgres:14
+      alias: postgres
+  variables:
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    POSTGRES_DB: grocademy_test
+    DATABASE_URL: 'postgresql://test:test@postgres:5432/grocademy_test?schema=public'
+  script:
+    - set -eo pipefail
+    - echo "== Applying migrations to the integration test database =="
+    - npx prisma migrate deploy
+    - echo "== Running integration tests against a real Postgres instance =="
+    - npx jest --ci --config ./test/jest-integration.json
+  artifacts:
+    when: always
+    reports:
+      junit: reports/integration.xml
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS == null'
+
+# ---------------------------------------------------------------------------
+# build stage - only reached if every verify job above passed (fail fast:
+# a broken build never gets turned into an artifact, let alone deployed)
+# ---------------------------------------------------------------------------
+
+docker-build:
+  stage: build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: '/certs'
+    IMAGE: '$CI_REGISTRY_IMAGE'
+  before_script:
+    - set -eo pipefail
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - set -eo pipefail
+    # Build exactly once, tag with the immutable commit SHA. This exact
+    # image (never rebuilt) is what later stages/environments should
+    # reference by tag - "build once, promote everywhere".
+    - docker build -t "$IMAGE:$CI_COMMIT_SHORT_SHA" .
+    - docker push "$IMAGE:$CI_COMMIT_SHORT_SHA"
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$IMAGE:$CI_COMMIT_SHORT_SHA" "$IMAGE:latest"
+        docker push "$IMAGE:latest"
+      fi
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
