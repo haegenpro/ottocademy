@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AddBalanceDto } from './dto/add-balance.dto';
 
 @Injectable()
 export class UsersService {
@@ -9,15 +13,17 @@ export class UsersService {
 
   async findAll(page: number = 1, limit: number = 10, search?: string) {
     const skip = (page - 1) * limit;
-    
-    const where = search ? {
-      OR: [
-        { email: { contains: search, mode: 'insensitive' as const } },
-        { username: { contains: search, mode: 'insensitive' as const } },
-        { firstName: { contains: search, mode: 'insensitive' as const } },
-        { lastName: { contains: search, mode: 'insensitive' as const } },
-      ],
-    } : {};
+
+    const where = search
+      ? {
+          OR: [
+            { email: { contains: search, mode: 'insensitive' as const } },
+            { username: { contains: search, mode: 'insensitive' as const } },
+            { firstName: { contains: search, mode: 'insensitive' as const } },
+            { lastName: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -36,7 +42,7 @@ export class UsersService {
       this.prisma.user.count({ where }),
     ]);
 
-    const transformedUsers = users.map(user => ({
+    const transformedUsers = users.map((user) => ({
       id: user.id,
       username: user.username,
       email: user.email,
@@ -85,11 +91,11 @@ export class UsersService {
       throw new ForbiddenException('Admin cannot modify their own account');
     }
 
-    const user = await this.prisma.user.findUnique({ 
+    const user = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, isAdmin: true },
     });
-    
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -98,17 +104,16 @@ export class UsersService {
       throw new ForbiddenException('Cannot modify admin accounts');
     }
 
-    const updateData: any = { ...updateUserDto };
-    
-    if (updateUserDto.first_name) {
-      updateData.firstName = updateUserDto.first_name;
-      delete updateData.first_name;
+    const { first_name, last_name, ...rest } = updateUserDto;
+    const updateData: Prisma.UserUpdateInput = { ...rest };
+
+    if (first_name) {
+      updateData.firstName = first_name;
     }
-    if (updateUserDto.last_name) {
-      updateData.lastName = updateUserDto.last_name;
-      delete updateData.last_name;
+    if (last_name) {
+      updateData.lastName = last_name;
     }
-    
+
     if (updateUserDto.password) {
       const bcrypt = await import('bcrypt');
       updateData.password = await bcrypt.hash(updateUserDto.password, 10);
@@ -171,13 +176,16 @@ export class UsersService {
       });
     });
 
-    return { 
-      status: 'success', 
-      message: `User with ID "${id}" has been deleted.` 
+    return {
+      status: 'success',
+      message: `User with ID "${id}" has been deleted.`,
     };
   }
 
-  async addBalance(id: string, increment: number, adminUserId: string) {
+  // adminUserId is accepted (and passed by the controller) for parity with
+  // update()/remove() which use it for self-modification checks; balance
+  // top-ups have no such restriction today.
+  async addBalance(id: string, increment: number, _adminUserId: string) {
     await this.findOne(id);
 
     const updatedUser = await this.prisma.user.update({

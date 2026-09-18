@@ -1,4 +1,11 @@
-import { IsArray, IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Min,
+} from 'class-validator';
 import { CourseCategory } from '@prisma/client';
 
 export class CreateCourseDto {

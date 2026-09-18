@@ -1,9 +1,15 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import type { GoogleProfileUser } from './google.strategy';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +19,14 @@ export class AuthService {
   ) {}
 
   async register(registerUserDto: RegisterUserDto) {
-    const { email, username, password, confirm_password, first_name, last_name } = registerUserDto;
+    const {
+      email,
+      username,
+      password,
+      confirm_password,
+      first_name,
+      last_name,
+    } = registerUserDto;
 
     if (password !== confirm_password) {
       throw new BadRequestException('Passwords do not match.');
@@ -45,7 +58,7 @@ export class AuthService {
 
   async login(loginUserDto: LoginUserDto) {
     const { identifier, password } = loginUserDto;
-    
+
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { username: identifier }],
@@ -89,22 +102,19 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('User not found.');
     }
-    
+
     return {
       ...user,
       balance: user.balance / 100,
     };
   }
 
-  async validateGoogleUser(googleUser: any) {
+  async validateGoogleUser(googleUser: GoogleProfileUser) {
     const { googleId, email, firstName, lastName, picture } = googleUser;
 
     let user = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email },
-          { googleId },
-        ],
+        OR: [{ email }, { googleId }],
       },
     });
 
@@ -116,8 +126,9 @@ export class AuthService {
         });
       }
     } else {
-      const username = email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
-      
+      const username =
+        email.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
+
       user = await this.prisma.user.create({
         data: {
           email,

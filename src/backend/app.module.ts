@@ -15,7 +15,7 @@ import { multerConfig } from './config/multer.config';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, 
+      isGlobal: true,
     }),
     PrismaModule,
     AuthModule,

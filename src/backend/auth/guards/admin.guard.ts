@@ -1,5 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Injectable()
 export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
@@ -9,13 +15,17 @@ export class AdminGuard extends AuthGuard('jwt') implements CanActivate {
       return false;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
-    console.log(`Admin guard check - User: ${user?.username}, isAdmin: ${user?.isAdmin}`);
+    console.log(
+      `Admin guard check - User: ${user?.username}, isAdmin: ${user?.isAdmin}`,
+    );
 
     if (!user || !user.isAdmin) {
-      console.error(`Access denied for user: ${user?.username} (isAdmin: ${user?.isAdmin})`);
+      console.error(
+        `Access denied for user: ${user?.username} (isAdmin: ${user?.isAdmin})`,
+      );
       throw new ForbiddenException('Admin access required');
     }
 

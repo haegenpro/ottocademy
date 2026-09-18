@@ -1,11 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { App } from 'supertest/types';
+import request from 'supertest';
+import type { Server } from 'net';
 import { AppModule } from '../src/backend/app.module';
 
+// Note: the installed `supertest` (7.x) ships no bundled TS types (no
+// "types" field, no .d.ts) despite newer NestJS e2e boilerplate assuming
+// one via `supertest/types` - that submodule doesn't exist here, so we
+// rely on the separate `@types/supertest` package instead. Typing the app
+// as INestApplication<Server> (rather than the default `any`) keeps
+// getHttpServer() typed so it can be passed to request() safely.
 describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<Server>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({

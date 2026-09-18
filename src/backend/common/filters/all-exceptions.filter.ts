@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { getErrorMessage } from '../utils/get-error-message';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -27,9 +28,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal server error';
-      
+
       this.logger.error(
-        `Unexpected error: ${exception}`,
+        `Unexpected error: ${getErrorMessage(exception, 'Unknown error')}`,
         exception instanceof Error ? exception.stack : 'No stack trace',
       );
     }

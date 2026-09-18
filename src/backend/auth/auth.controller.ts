@@ -1,10 +1,23 @@
-import { Controller, Post, Body, UseGuards, Get, Request, Put, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Request,
+  Res,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import type { Response } from 'express';
+import type {
+  AuthenticatedRequest,
+  GoogleAuthenticatedRequest,
+} from '../common/types/authenticated-request';
+import { getErrorMessage } from '../common/utils/get-error-message';
 
 @Controller('auth')
 export class AuthController {
@@ -24,10 +37,10 @@ export class AuthController {
           last_name: user.lastName,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Registration failed',
+        message: getErrorMessage(error, 'Registration failed'),
         data: null,
       };
     }
@@ -45,10 +58,10 @@ export class AuthController {
           token: result.access_token,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Login failed',
+        message: getErrorMessage(error, 'Login failed'),
         data: null,
       };
     }
@@ -56,7 +69,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('self')
-  async getSelf(@Request() req) {
+  async getSelf(@Request() req: AuthenticatedRequest) {
     try {
       const profile = await this.authService.getProfile(req.user.id);
       return {
@@ -72,10 +85,10 @@ export class AuthController {
           isAdmin: profile.isAdmin,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to retrieve profile',
+        message: getErrorMessage(error, 'Failed to retrieve profile'),
         data: null,
       };
     }
@@ -87,14 +100,17 @@ export class AuthController {
       hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
       hasGoogleCallbackUrl: !!process.env.GOOGLE_CALLBACK_URL,
-      googleClientId: process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' ? 'PLACEHOLDER' : 'CONFIGURED',
-      callbackUrl: process.env.GOOGLE_CALLBACK_URL
+      googleClientId:
+        process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id'
+          ? 'PLACEHOLDER'
+          : 'CONFIGURED',
+      callbackUrl: process.env.GOOGLE_CALLBACK_URL,
     };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('debug/token')
-  debugToken(@Request() req) {
+  debugToken(@Request() req: AuthenticatedRequest) {
     return {
       status: 'success',
       message: 'Token is valid',
@@ -109,36 +125,53 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Request() req) {
+  // Guard initiates the Google redirect; this body only runs for debug
+  // logging when the guard lets the request through.
+  googleAuth() {
     console.log('=== Google OAuth Debug ===');
     console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
-    console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '[HIDDEN]' : 'undefined');
+    console.log(
+      'GOOGLE_CLIENT_SECRET:',
+      process.env.GOOGLE_CLIENT_SECRET ? '[HIDDEN]' : 'undefined',
+    );
     console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
     console.log('========================');
-    
-    if (process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' || !process.env.GOOGLE_CLIENT_ID) {
+
+    if (
+      process.env.GOOGLE_CLIENT_ID === 'placeholder-client-id' ||
+      !process.env.GOOGLE_CLIENT_ID
+    ) {
       console.log('Google OAuth validation failed - not configured');
-      throw new Error('Google OAuth is not configured. Please contact the administrator.');
+      throw new Error(
+        'Google OAuth is not configured. Please contact the administrator.',
+      );
     }
-    
+
     console.log('Google OAuth validation passed - redirecting to Google');
   }
 
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Request() req, @Res() res: Response) {
+  googleAuthRedirect(
+    @Request() req: GoogleAuthenticatedRequest,
+    @Res() res: Response,
+  ) {
     try {
       const result = req.user;
-      
+
       const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
-      
+
       const encodedToken = encodeURIComponent(result.token);
-      
-      res.redirect(`${frontendUrl}/auth.html?oauth=success&token=${encodedToken}`);
-    } catch (error) {
+
+      res.redirect(
+        `${frontendUrl}/auth.html?oauth=success&token=${encodedToken}`,
+      );
+    } catch (error: unknown) {
       console.error('OAuth callback error:', error);
       const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:3000';
-      res.redirect(`${frontendUrl}/auth.html?oauth=error&message=${encodeURIComponent('Authentication failed')}`);
+      res.redirect(
+        `${frontendUrl}/auth.html?oauth=error&message=${encodeURIComponent('Authentication failed')}`,
+      );
     }
   }
 }

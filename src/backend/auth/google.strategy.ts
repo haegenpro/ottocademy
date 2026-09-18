@@ -1,25 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
 import { AuthService } from './auth.service';
+
+/** The subset of a Google profile we pull out and hand to AuthService. */
+export interface GoogleProfileUser {
+  googleId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  picture: string;
+  accessToken: string;
+}
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private authService: AuthService) {
     const clientID = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    
+
     console.log('=== Google Strategy Init ===');
     console.log('GOOGLE_CLIENT_ID:', clientID);
-    console.log('GOOGLE_CLIENT_SECRET:', clientSecret ? '[HIDDEN]' : 'undefined');
+    console.log(
+      'GOOGLE_CLIENT_SECRET:',
+      clientSecret ? '[HIDDEN]' : 'undefined',
+    );
     console.log('============================');
-    
+
     if (!clientID || !clientSecret || clientID === 'placeholder-client-id') {
-      console.warn('Google OAuth is not properly configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.');
+      console.warn(
+        'Google OAuth is not properly configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.',
+      );
       super({
         clientID: 'dummy-client-id',
         clientSecret: 'dummy-client-secret',
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://127.0.0.1:3000/auth/google/callback',
+        callbackURL:
+          process.env.GOOGLE_CALLBACK_URL ||
+          'http://127.0.0.1:3000/auth/google/callback',
         scope: ['email', 'profile'],
       });
       return;
@@ -29,7 +46,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID,
       clientSecret,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://127.0.0.1:3000/auth/google/callback',
+      callbackURL:
+        process.env.GOOGLE_CALLBACK_URL ||
+        'http://127.0.0.1:3000/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
@@ -37,25 +56,29 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: Profile,
     done: VerifyCallback,
-  ): Promise<any> {
-    const { id, name, emails, photos } = profile;
-    
-    const user = {
-      googleId: id,
-      email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
+  ): Promise<void> {
+    const email = profile.emails?.[0]?.value;
+    if (!email) {
+      done(new Error('Google profile did not include an email address'));
+      return;
+    }
+
+    const user: GoogleProfileUser = {
+      googleId: profile.id,
+      email,
+      firstName: profile.name?.givenName ?? '',
+      lastName: profile.name?.familyName ?? '',
+      picture: profile.photos?.[0]?.value ?? '',
       accessToken,
     };
 
     try {
       const validatedUser = await this.authService.validateGoogleUser(user);
       done(null, validatedUser);
-    } catch (error) {
-      done(error, false);
+    } catch (error: unknown) {
+      done(error instanceof Error ? error : new Error(String(error)));
     }
   }
 }

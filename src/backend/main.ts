@@ -7,45 +7,47 @@ import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
-    
+
     // Serve static files from the 'public' directory (clearer separation from backend)
     app.useStaticAssets(join(process.cwd(), 'public'), {
       index: false, // Disable auto-serving index.html to avoid conflict with controller
     });
-    
+
     // Serve uploads directory for course images and files
     app.useStaticAssets(join(process.cwd(), 'uploads'), {
       prefix: '/uploads/',
     });
-    
+
     // Set global API prefix for API routes only
     app.setGlobalPrefix('api', {
       exclude: [
         '',
         'auth.html',
-        'courses.html', 
+        'courses.html',
         'course-detail.html',
         'module.html',
         'my-courses.html',
         'profile.html',
         'auth/google',
-        'auth/google/callback'
-      ]
+        'auth/google/callback',
+      ],
     });
-    
+
     // Global exception filter to prevent server crashes
     app.useGlobalFilters(new AllExceptionsFilter());
-    
+
     // Global validation pipe for DTO validation
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }));
-    
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+
     // Enable CORS for frontend integration
     app.enableCors({
       origin: true,
@@ -56,7 +58,7 @@ async function bootstrap() {
 
     // Listen on all interfaces (IPv4 and IPv6)
     await app.listen(port, '::'); // '::' binds to both IPv4 and IPv6
-    
+
     logger.log(`Application is running on: http://localhost:${port}`);
     logger.log(`Also available on: http://127.0.0.1:${port}`);
   } catch (error) {
@@ -73,4 +75,4 @@ process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
 });
 
-bootstrap();
+void bootstrap();

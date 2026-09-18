@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { deleteFileFromGCS } from '../gcs.helper';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CoursesService {
@@ -20,11 +26,16 @@ export class CoursesService {
     });
   }
 
-  async findAll(search?: string, page: number = 1, limit: number = 15, category?: string) {
+  async findAll(
+    search?: string,
+    page: number = 1,
+    limit: number = 15,
+    category?: string,
+  ) {
     const skip = (page - 1) * limit;
-    
-    const where: any = {};
-    
+
+    const where: Prisma.CourseWhereInput = {};
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' as const } },
@@ -32,9 +43,11 @@ export class CoursesService {
         { topics: { has: search } },
       ];
     }
-    
+
     if (category) {
-      where.category = category;
+      // category comes in as a raw query-string value; Prisma will reject
+      // it at runtime if it isn't one of the CourseCategory enum values.
+      where.category = category as Prisma.CourseWhereInput['category'];
     }
 
     const [courses, total] = await Promise.all([
@@ -52,7 +65,7 @@ export class CoursesService {
       this.prisma.course.count({ where }),
     ]);
 
-    const coursesWithModuleCount = courses.map(course => ({
+    const coursesWithModuleCount = courses.map((course) => ({
       ...course,
       price: course.price / 100,
       total_modules: course.modules.length,
@@ -72,7 +85,7 @@ export class CoursesService {
   }
 
   async findOne(id: string, userId?: string) {
-    const course = await this.prisma.course.findUnique({ 
+    const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
         modules: {
@@ -83,7 +96,7 @@ export class CoursesService {
     if (!course) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
-    
+
     let isPurchased = false;
     if (userId) {
       const userCourse = await this.prisma.userCourse.findUnique({
@@ -91,7 +104,7 @@ export class CoursesService {
       });
       isPurchased = !!userCourse;
     }
-    
+
     return {
       ...course,
       price: course.price / 100,
@@ -101,13 +114,21 @@ export class CoursesService {
     };
   }
 
-  async update(id: string, updateCourseDto: UpdateCourseDto, thumbnailPath?: string) {
-    const existingCourse = await this.prisma.course.findUnique({ where: { id } });
+  async update(
+    id: string,
+    updateCourseDto: UpdateCourseDto,
+    thumbnailPath?: string,
+  ) {
+    const existingCourse = await this.prisma.course.findUnique({
+      where: { id },
+    });
     if (!existingCourse) {
       throw new NotFoundException(`Course with ID "${id}" not found.`);
     }
 
-    const priceInCents = updateCourseDto.price ? updateCourseDto.price * 100 : undefined;
+    const priceInCents = updateCourseDto.price
+      ? updateCourseDto.price * 100
+      : undefined;
 
     const updatedCourse = await this.prisma.course.update({
       where: { id },
@@ -125,7 +146,7 @@ export class CoursesService {
   }
 
   async remove(id: string) {
-    const course = await this.prisma.course.findUnique({ 
+    const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
         modules: true,
@@ -218,9 +239,14 @@ export class CoursesService {
     });
   }
 
-  async getMyCourses(userId: string, search?: string, page: number = 1, limit: number = 15) {
+  async getMyCourses(
+    userId: string,
+    search?: string,
+    page: number = 1,
+    limit: number = 15,
+  ) {
     const skip = (page - 1) * limit;
-    
+
     const where = {
       userId,
       ...(search && {
@@ -253,7 +279,7 @@ export class CoursesService {
       this.prisma.userCourse.count({ where }),
     ]);
 
-    const courseIds = userCourses.map(uc => uc.courseId);
+    const courseIds = userCourses.map((uc) => uc.courseId);
     const completions = await this.prisma.moduleCompletion.groupBy({
       by: ['moduleId'],
       where: {
@@ -266,7 +292,7 @@ export class CoursesService {
       _count: { moduleId: true },
     });
 
-    const completionMap = new Map();
+    const completionMap = new Map<string, number>();
     for (const completion of completions) {
       const module = await this.prisma.module.findUnique({
         where: { id: completion.moduleId },
@@ -278,10 +304,11 @@ export class CoursesService {
       }
     }
 
-    const coursesWithProgress = userCourses.map(userCourse => {
+    const coursesWithProgress = userCourses.map((userCourse) => {
       const totalModules = userCourse.course.modules.length;
       const completedModules = completionMap.get(userCourse.courseId) || 0;
-      const progressPercentage = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+      const progressPercentage =
+        totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
 
       return {
         id: userCourse.course.id,
@@ -306,7 +333,13 @@ export class CoursesService {
     };
   }
 
-  async getCourseModules(courseId: string, userId: string, page: number = 1, limit: number = 15, isAdmin: boolean = false) {
+  async getCourseModules(
+    courseId: string,
+    userId: string,
+    page: number = 1,
+    limit: number = 15,
+    isAdmin: boolean = false,
+  ) {
     if (!isAdmin) {
       const userCourse = await this.prisma.userCourse.findUnique({
         where: { userId_courseId: { userId, courseId } },
@@ -335,9 +368,10 @@ export class CoursesService {
       this.prisma.module.count({ where: { courseId } }),
     ]);
 
-    const modulesWithCompletion = modules.map(module => ({
+    const modulesWithCompletion = modules.map((module) => ({
       ...module,
-      is_completed: module.completions.length > 0 && module.completions[0].isCompleted,
+      is_completed:
+        module.completions.length > 0 && module.completions[0].isCompleted,
       completions: undefined,
     }));
 

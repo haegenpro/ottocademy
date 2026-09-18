@@ -1,14 +1,8 @@
-import {
-  Controller,
-  Get,
-  Param,
-  UseGuards,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Req, Res } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CertificatesService } from './certificates.service';
 import type { Response } from 'express';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 
 @Controller('certificates')
 @UseGuards(JwtAuthGuard)
@@ -16,20 +10,21 @@ export class CertificatesController {
   constructor(private readonly certificatesService: CertificatesService) {}
 
   @Get('course/:courseId')
-  async getCertificate(@Param('courseId') courseId: string, @Req() req: any) {
+  async getCertificate(
+    @Param('courseId') courseId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.certificatesService.getCertificate(courseId, req.user.id);
   }
 
   @Get('course/:courseId/download')
   async downloadCertificate(
     @Param('courseId') courseId: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { html, filename, mimeType } = await this.certificatesService.downloadCertificate(
-      courseId,
-      req.user.id,
-    );
+    const { html, filename, mimeType } =
+      await this.certificatesService.downloadCertificate(courseId, req.user.id);
 
     res.set({
       'Content-Type': mimeType,

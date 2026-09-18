@@ -1,8 +1,14 @@
 import { Storage } from '@google-cloud/storage';
 
 const getStorage = () => {
-  if (!process.env.GOOGLE_CLOUD_PROJECT_ID || !process.env.GOOGLE_CLOUD_KEYFILE || !process.env.GOOGLE_CLOUD_STORAGE_BUCKET) {
-    console.warn('Google Cloud Storage not configured. File operations will be skipped.');
+  if (
+    !process.env.GOOGLE_CLOUD_PROJECT_ID ||
+    !process.env.GOOGLE_CLOUD_KEYFILE ||
+    !process.env.GOOGLE_CLOUD_STORAGE_BUCKET
+  ) {
+    console.warn(
+      'Google Cloud Storage not configured. File operations will be skipped.',
+    );
     return null;
   }
 
@@ -22,8 +28,13 @@ const getBucket = () => {
 
 export const deleteFileFromGCS = async (publicUrl: string) => {
   const bucket = getBucket();
-  
-  if (!bucket || !publicUrl || !process.env.GOOGLE_CLOUD_STORAGE_BUCKET || !publicUrl.includes(process.env.GOOGLE_CLOUD_STORAGE_BUCKET)) {
+
+  if (
+    !bucket ||
+    !publicUrl ||
+    !process.env.GOOGLE_CLOUD_STORAGE_BUCKET ||
+    !publicUrl.includes(process.env.GOOGLE_CLOUD_STORAGE_BUCKET)
+  ) {
     console.log('Skipping GCS file deletion - not configured or invalid URL');
     return;
   }

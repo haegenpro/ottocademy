@@ -18,6 +18,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AddBalanceDto } from './dto/add-balance.dto';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
+import { getErrorMessage } from '../common/utils/get-error-message';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('users')
@@ -34,10 +36,10 @@ export class UsersController {
       const pageNum = parseInt(page, 10) || 1;
       const limitNum = parseInt(limit, 10) || 10;
       return await this.usersService.findAll(pageNum, limitNum, search);
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to retrieve users',
+        message: getErrorMessage(error, 'Failed to retrieve users'),
         data: null,
       };
     }
@@ -52,28 +54,36 @@ export class UsersController {
         message: 'User retrieved successfully',
         data: user,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to retrieve user',
+        message: getErrorMessage(error, 'Failed to retrieve user'),
         data: null,
       };
     }
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Request() req) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     try {
-      const user = await this.usersService.update(id, updateUserDto, req.user.id);
+      const user = await this.usersService.update(
+        id,
+        updateUserDto,
+        req.user.id,
+      );
       return {
         status: 'success',
         message: 'User updated successfully',
         data: user,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to update user',
+        message: getErrorMessage(error, 'Failed to update user'),
         data: null,
       };
     }
@@ -81,16 +91,28 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string, @Request() req, @Res() res: Response) {
+  async remove(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
     const adminUserId = req.user.id;
     await this.usersService.remove(id, adminUserId);
     res.status(204).send();
   }
 
   @Post(':id/balance')
-  async addBalance(@Param('id') id: string, @Body() addBalanceDto: AddBalanceDto, @Request() req) {
+  async addBalance(
+    @Param('id') id: string,
+    @Body() addBalanceDto: AddBalanceDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     try {
-      const user = await this.usersService.addBalance(id, addBalanceDto.increment, req.user.id);
+      const user = await this.usersService.addBalance(
+        id,
+        addBalanceDto.increment,
+        req.user.id,
+      );
       return {
         status: 'success',
         message: 'Balance updated successfully',
@@ -100,10 +122,10 @@ export class UsersController {
           balance: user.balance,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to update balance',
+        message: getErrorMessage(error, 'Failed to update balance'),
         data: null,
       };
     }

@@ -8,18 +8,28 @@ import { ConfigService } from '@nestjs/config';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
+    configService: ConfigService,
   ) {
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      // Fail fast/loud: a missing JWT secret must never silently fall
+      // through to passport-jwt, which would otherwise accept `undefined`.
+      throw new Error('JWT_SECRET is not configured');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
   }
 
   async validate(payload: { sub: string; username: string }) {
-    console.log('JWT payload received:', { sub: payload.sub, username: payload.username });
-    
+    console.log('JWT payload received:', {
+      sub: payload.sub,
+      username: payload.username,
+    });
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });
@@ -28,9 +38,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       console.error(`User not found for JWT payload: ${payload.sub}`);
       throw new UnauthorizedException('User not found');
     }
-    
-    console.log(`User authenticated: ${user.username} (Admin: ${user.isAdmin})`);
-    const { password, ...result } = user;
+
+    console.log(
+      `User authenticated: ${user.username} (Admin: ${user.isAdmin})`,
+    );
+    const { password: _password, ...result } = user;
     return result;
   }
 }

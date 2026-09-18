@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { deleteFileFromGCS } from '../gcs.helper';
+import { Certificate } from '@prisma/client';
 
 @Injectable()
 export class ModulesService {
@@ -12,7 +17,10 @@ export class ModulesService {
   async create(
     courseId: string,
     createModuleDto: CreateModuleDto,
-    files?: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+    files?: {
+      pdf_content?: Express.Multer.File[];
+      video_content?: Express.Multer.File[];
+    },
   ) {
     const pdfPath = files?.pdf_content?.[0]?.path;
     const videoPath = files?.video_content?.[0]?.path;
@@ -69,7 +77,8 @@ export class ModulesService {
       message: 'Module retrieved successfully',
       data: {
         ...module,
-        is_completed: module.completions.length > 0 && module.completions[0].isCompleted,
+        is_completed:
+          module.completions.length > 0 && module.completions[0].isCompleted,
         course: undefined,
         completions: undefined,
       },
@@ -79,7 +88,7 @@ export class ModulesService {
   async reorder(reorderModulesDto: ReorderModulesDto) {
     const { module_order } = reorderModulesDto;
 
-    const updatePromises = module_order.map(module =>
+    const updatePromises = module_order.map((module) =>
       this.prisma.module.update({
         where: { id: module.id },
         data: { order: module.order },
@@ -92,14 +101,14 @@ export class ModulesService {
   async complete(moduleId: string, userId: string, isAdmin: boolean = false) {
     const module = await this.prisma.module.findUnique({
       where: { id: moduleId },
-      include: { 
-        course: { 
-          include: { 
+      include: {
+        course: {
+          include: {
             purchasedBy: {
               where: { userId },
-            }
-          } 
-        } 
+            },
+          },
+        },
       },
     });
 
@@ -118,7 +127,9 @@ export class ModulesService {
     });
 
     const courseId = module.courseId;
-    const totalModules = await this.prisma.module.count({ where: { courseId } });
+    const totalModules = await this.prisma.module.count({
+      where: { courseId },
+    });
     const completedModules = await this.prisma.moduleCompletion.count({
       where: {
         userId,
@@ -127,7 +138,7 @@ export class ModulesService {
       },
     });
 
-    let certificate: any = null;
+    let certificate: Certificate | null = null;
     if (totalModules === completedModules) {
       certificate = await this.prisma.certificate.upsert({
         where: { userId_courseId: { userId, courseId } },
@@ -155,7 +166,10 @@ export class ModulesService {
   async update(
     id: string,
     updateModuleDto: UpdateModuleDto,
-    files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+    files: {
+      pdf_content?: Express.Multer.File[];
+      video_content?: Express.Multer.File[];
+    },
   ) {
     const module = await this.prisma.module.findUnique({ where: { id } });
     if (!module) {
@@ -184,11 +198,11 @@ export class ModulesService {
 
   async remove(id: string) {
     const module = await this.prisma.module.findUnique({ where: { id } });
-    
+
     if (!module) {
       throw new NotFoundException(`Module with ID "${id}" not found.`);
     }
-    
+
     await this.prisma.$transaction(async (prisma) => {
       await prisma.moduleCompletion.deleteMany({
         where: { moduleId: id },
@@ -207,8 +221,11 @@ export class ModulesService {
     return { message: `Module with ID "${id}" has been deleted.` };
   }
 
-  async reorderModules(courseId: string, moduleOrder: { id: string; order: number }[]) {
-    const moduleIds = moduleOrder.map(item => item.id);
+  async reorderModules(
+    courseId: string,
+    moduleOrder: { id: string; order: number }[],
+  ) {
+    const moduleIds = moduleOrder.map((item) => item.id);
     const modules = await this.prisma.module.findMany({
       where: {
         id: { in: moduleIds },
@@ -217,14 +234,16 @@ export class ModulesService {
     });
 
     if (modules.length !== moduleIds.length) {
-      throw new NotFoundException('One or more modules not found or do not belong to this course');
+      throw new NotFoundException(
+        'One or more modules not found or do not belong to this course',
+      );
     }
 
-    const updatePromises = moduleOrder.map(item =>
+    const updatePromises = moduleOrder.map((item) =>
       this.prisma.module.update({
         where: { id: item.id },
         data: { order: item.order },
-      })
+      }),
     );
 
     await Promise.all(updatePromises);

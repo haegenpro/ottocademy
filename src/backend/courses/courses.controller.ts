@@ -1,7 +1,20 @@
 import {
-  Controller, Post, Body, UseGuards, UseInterceptors,
-  UploadedFile, Get, Param, Put, Delete, Request, UploadedFiles, Query,
-  HttpCode, Res, Patch
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  Get,
+  Param,
+  Put,
+  Delete,
+  Request,
+  UploadedFiles,
+  Query,
+  HttpCode,
+  Res,
+  Patch,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -13,12 +26,15 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { /*...,*/ ModulesService } from '../modules/modules.service';
 import { CreateModuleDto } from '../modules/dto/create-module.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
+import { getErrorMessage } from '../common/utils/get-error-message';
 
 @UseGuards(JwtAuthGuard)
 @Controller('courses')
 export class CoursesController {
-  constructor(private readonly coursesService: CoursesService,
-              private readonly modulesService: ModulesService
+  constructor(
+    private readonly coursesService: CoursesService,
+    private readonly modulesService: ModulesService,
   ) {}
 
   @UseGuards(AdminGuard)
@@ -29,16 +45,19 @@ export class CoursesController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     try {
-      const course = await this.coursesService.create(createCourseDto, file?.path);
+      const course = await this.coursesService.create(
+        createCourseDto,
+        file?.path,
+      );
       return {
         status: 'success',
         message: 'Course created successfully',
         data: course,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to create course',
+        message: getErrorMessage(error, 'Failed to create course'),
         data: null,
       };
     }
@@ -54,17 +73,22 @@ export class CoursesController {
     try {
       const pageNumber = page ? parseInt(page, 10) : 1;
       const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-      const result = await this.coursesService.findAll(search, pageNumber, limitNumber, category);
+      const result = await this.coursesService.findAll(
+        search,
+        pageNumber,
+        limitNumber,
+        category,
+      );
       return {
         status: 'success',
         message: 'Courses retrieved successfully',
         data: result.data,
         pagination: result.pagination,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to retrieve courses',
+        message: getErrorMessage(error, 'Failed to retrieve courses'),
         data: null,
       };
     }
@@ -72,7 +96,7 @@ export class CoursesController {
 
   @Get('my-courses')
   getMyCourses(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Query('q') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -80,11 +104,16 @@ export class CoursesController {
     const userId = req.user.id;
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.getMyCourses(userId, search, pageNumber, limitNumber);
+    return this.coursesService.getMyCourses(
+      userId,
+      search,
+      pageNumber,
+      limitNumber,
+    );
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     const userId = req.user?.id;
     return this.coursesService.findOne(id, userId);
   }
@@ -109,7 +138,10 @@ export class CoursesController {
   }
 
   @Post(':id/buy')
-  buyCourse(@Param('id') courseId: string, @Request() req) {
+  buyCourse(
+    @Param('id') courseId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const userId = req.user.id;
     return this.coursesService.buy(courseId, userId);
   }
@@ -117,7 +149,7 @@ export class CoursesController {
   @Get(':courseId/modules')
   getCourseModules(
     @Param('courseId') courseId: string,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -125,22 +157,38 @@ export class CoursesController {
     const isAdmin = req.user.isAdmin || false;
     const pageNumber = page ? parseInt(page, 10) : 1;
     const limitNumber = limit ? Math.min(parseInt(limit, 10), 50) : 15;
-    return this.coursesService.getCourseModules(courseId, userId, pageNumber, limitNumber, isAdmin);
+    return this.coursesService.getCourseModules(
+      courseId,
+      userId,
+      pageNumber,
+      limitNumber,
+      isAdmin,
+    );
   }
 
   @UseGuards(AdminGuard)
   @Post(':courseId/modules')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'pdf_content', maxCount: 1 },
-    { name: 'video_content', maxCount: 1 },
-  ]))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'pdf_content', maxCount: 1 },
+      { name: 'video_content', maxCount: 1 },
+    ]),
+  )
   async createModule(
     @Param('courseId') courseId: string,
     @Body() createModuleDto: CreateModuleDto,
-    @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: {
+      pdf_content?: Express.Multer.File[];
+      video_content?: Express.Multer.File[];
+    },
   ) {
     try {
-      const module = await this.modulesService.create(courseId, createModuleDto, files);
+      const module = await this.modulesService.create(
+        courseId,
+        createModuleDto,
+        files,
+      );
       return {
         status: 'success',
         message: 'Module created successfully',
@@ -156,10 +204,10 @@ export class CoursesController {
           updated_at: new Date().toISOString(),
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to create module',
+        message: getErrorMessage(error, 'Failed to create module'),
         data: null,
       };
     }
@@ -172,7 +220,10 @@ export class CoursesController {
     @Body() reorderDto: { module_order: { id: string; order: number }[] },
   ) {
     try {
-      const result = await this.modulesService.reorderModules(courseId, reorderDto.module_order);
+      const result = await this.modulesService.reorderModules(
+        courseId,
+        reorderDto.module_order,
+      );
       return {
         status: 'success',
         message: 'Modules reordered successfully',
@@ -180,10 +231,10 @@ export class CoursesController {
           module_order: result,
         },
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         status: 'error',
-        message: error.message || 'Failed to reorder modules',
+        message: getErrorMessage(error, 'Failed to reorder modules'),
         data: null,
       };
     }

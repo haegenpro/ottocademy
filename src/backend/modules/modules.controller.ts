@@ -20,6 +20,8 @@ import { AdminGuard } from '../auth/guards/admin.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
+import { getErrorMessage } from '../common/utils/get-error-message';
 
 @Controller('modules')
 export class ModulesController {
@@ -33,7 +35,7 @@ export class ModulesController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
+  findOne(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
     const userId = req.user.id;
     const isAdmin = req.user.isAdmin || false;
     return this.modulesService.findOne(id, userId, isAdmin);
@@ -41,7 +43,10 @@ export class ModulesController {
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id/complete')
-  completeModule(@Param('id') moduleId: string, @Request() req) {
+  completeModule(
+    @Param('id') moduleId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
     const userId = req.user.id;
     const isAdmin = req.user.isAdmin || false;
     return this.modulesService.complete(moduleId, userId, isAdmin);
@@ -49,39 +54,49 @@ export class ModulesController {
 
   @UseGuards(AdminGuard)
   @Put(':id')
-  @UseInterceptors(FileFieldsInterceptor([
+  @UseInterceptors(
+    FileFieldsInterceptor([
       { name: 'pdf_content', maxCount: 1 },
       { name: 'video_content', maxCount: 1 },
-  ]))
+    ]),
+  )
   async update(
-      @Param('id') id: string,
-      @Body() updateModuleDto: UpdateModuleDto,
-      @UploadedFiles() files: { pdf_content?: Express.Multer.File[], video_content?: Express.Multer.File[] },
+    @Param('id') id: string,
+    @Body() updateModuleDto: UpdateModuleDto,
+    @UploadedFiles()
+    files: {
+      pdf_content?: Express.Multer.File[];
+      video_content?: Express.Multer.File[];
+    },
   ) {
-      try {
-        const module = await this.modulesService.update(id, updateModuleDto, files);
-        return {
-          status: 'success',
-          message: 'Module updated successfully',
-          data: {
-            id: module.id,
-            course_id: module.courseId,
-            title: module.title,
-            description: module.description,
-            order: module.order,
-            pdf_content: module.pdf_content,
-            video_content: module.video_content,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        };
-      } catch (error) {
-        return {
-          status: 'error',
-          message: error.message || 'Failed to update module',
-          data: null,
-        };
-      }
+    try {
+      const module = await this.modulesService.update(
+        id,
+        updateModuleDto,
+        files,
+      );
+      return {
+        status: 'success',
+        message: 'Module updated successfully',
+        data: {
+          id: module.id,
+          course_id: module.courseId,
+          title: module.title,
+          description: module.description,
+          order: module.order,
+          pdf_content: module.pdf_content,
+          video_content: module.video_content,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      };
+    } catch (error: unknown) {
+      return {
+        status: 'error',
+        message: getErrorMessage(error, 'Failed to update module'),
+        data: null,
+      };
+    }
   }
 
   @UseGuards(AdminGuard)

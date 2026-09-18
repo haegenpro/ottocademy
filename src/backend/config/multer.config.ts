@@ -1,17 +1,26 @@
 import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import MulterGoogleCloudStorage from 'multer-cloud-storage';
 import { extname } from 'path';
+import type { Request } from 'express';
 
 export const multerConfig: MulterOptions = {
   storage: new MulterGoogleCloudStorage({
     bucket: process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
     keyFilename: process.env.GOOGLE_CLOUD_KEYFILE,
-    filename: (req, file, cb) => {
+    // `multer-cloud-storage` ships no types, so these callback params come
+    // in untyped - annotate them explicitly with multer's real File type.
+    filename: (
+      req: Request,
+      file: Express.Multer.File,
+      cb: (error: Error | null, filename: string) => void,
+    ) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
       const extension = extname(file.originalname);
-      const baseName = file.originalname.replace(extension, '').replace(/[^a-zA-Z0-9]/g, '-');
-      
+      const baseName = file.originalname
+        .replace(extension, '')
+        .replace(/[^a-zA-Z0-9]/g, '-');
+
       let folder = 'others/';
       if (file.fieldname === 'thumbnail_image') {
         folder = 'courses/';
@@ -26,13 +35,19 @@ export const multerConfig: MulterOptions = {
   }),
   fileFilter: (req, file, cb) => {
     const allowedMimes = {
-      'thumbnail_image': ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
-      'pdf_content': ['application/pdf'],
-      'video_content': ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/webm']
+      thumbnail_image: ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'],
+      pdf_content: ['application/pdf'],
+      video_content: [
+        'video/mp4',
+        'video/mpeg',
+        'video/quicktime',
+        'video/webm',
+      ],
     };
 
-    const fieldMimes = allowedMimes[file.fieldname as keyof typeof allowedMimes];
-    
+    const fieldMimes =
+      allowedMimes[file.fieldname as keyof typeof allowedMimes];
+
     if (fieldMimes && fieldMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {

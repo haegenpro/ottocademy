@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+
+type CertificateWithRelations = Prisma.CertificateGetPayload<{
+  include: { course: true; user: true };
+}>;
 
 @Injectable()
 export class CertificatesService {
@@ -36,8 +41,11 @@ export class CertificatesService {
     });
 
     const totalModules = userCourse.course.modules.length;
-    const completedModules = moduleCompletions.filter(completion => completion.isCompleted).length;
-    const completionPercentage = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+    const completedModules = moduleCompletions.filter(
+      (completion) => completion.isCompleted,
+    ).length;
+    const completionPercentage =
+      totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
 
     if (completionPercentage < 100) {
       throw new BadRequestException('Course not completed yet');
@@ -65,9 +73,9 @@ export class CertificatesService {
 
   async downloadCertificate(courseId: string, userId: string) {
     const certificate = await this.getCertificate(courseId, userId);
-    
+
     const htmlContent = this.generateCertificateHTML(certificate);
-    
+
     return {
       html: htmlContent,
       filename: `certificate-${courseId}-${userId}.html`,
@@ -91,12 +99,17 @@ export class CertificatesService {
     return certificate;
   }
 
-  private generateCertificateHTML(certificate: any): string {
-    const issuedDate = new Date(certificate.finishDate).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  private generateCertificateHTML(
+    certificate: CertificateWithRelations,
+  ): string {
+    const issuedDate = new Date(certificate.finishDate).toLocaleDateString(
+      'en-US',
+      {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      },
+    );
 
     return `
       <!DOCTYPE html>
