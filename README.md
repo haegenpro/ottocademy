@@ -662,13 +662,15 @@ GitHub (source of truth)
   → GitHub Actions CD   (on push to main, after CI succeeds)
       → Docker image built and pushed to GHCR
         (ghcr.io/<owner>/ottocademy:sha-<commit>, and :main)
-      → Render Web Service pulls that image and redeploys
-      → Post-deploy smoke test: GET /health
-  → Render Web Service (container) → managed PostgreSQL
+  → GitLab mirror (downstream, read-only, evaluator access only)
 ```
 
-GitLab is used only as a read-only mirror for evaluator access - it does not
-run any CI/CD; GitHub Actions is the only CI/CD engine.
+GitHub Actions is the only CI/CD engine, and **publishing to GHCR is
+currently the last step of the pipeline** - there is no automated deploy
+to a hosting platform. (An earlier iteration of this pipeline deployed to
+Render; that step has been removed - see "Deploying the image" below for
+what running the published image elsewhere requires.) GitLab is used only
+as a read-only mirror for evaluator access - it does not run any CI/CD.
 
 ### Environments: development vs CI vs production
 
@@ -676,7 +678,7 @@ run any CI/CD; GitHub Actions is the only CI/CD engine.
 |---|---|---|---|
 | **Development** | `docker-compose.yml` `db` service, or a local Postgres | `npx prisma migrate dev` (creates new migrations) | `.env` (never committed) |
 | **CI** | Ephemeral `postgres:14` GitHub Actions service container | `npx prisma migrate deploy` (applies committed migrations) | Job-scoped env vars with throwaway test values |
-| **Production** | Render-managed PostgreSQL (or any external Postgres) | `npx prisma migrate deploy`, run by the container's entrypoint before the app starts | Render service environment variables |
+| **Production** | Whatever external PostgreSQL the deployment target provides (not provisioned by this pipeline) | `npx prisma migrate deploy`, run by the container's entrypoint before the app starts | Environment variables provided by wherever the image is deployed |
 
 Production and CI never run `prisma migrate dev` - only `migrate deploy`,
 which applies migrations already committed under `prisma/migrations/`
@@ -686,14 +688,15 @@ and never generates new ones.
 
 All variables the application actually reads are documented in
 [`.env.example`](.env.example) with safe placeholders - copy it to `.env`
-for local use and never commit the real `.env`. In production (Render),
-set the real values as service environment variables:
+for local use and never commit the real `.env`. Wherever the image is
+ultimately deployed, set the real values as that platform's environment
+variables:
 
 | Variable | Purpose |
 |---|---|
-| `NODE_ENV` | `production` on Render |
-| `PORT` | Set automatically by Render; app falls back to `3000` locally |
-| `DATABASE_URL` | Postgres connection string (Render-managed DB or external) |
+| `NODE_ENV` | `production` in production |
+| `PORT` | Usually set automatically by the hosting platform; app falls back to `3000` locally |
+| `DATABASE_URL` | Postgres connection string for the target environment |
 | `JWT_SECRET` | Signing secret for session JWTs - use a long random value |
 | `FRONTEND_URL` | Base URL the app redirects the browser to after Google OAuth login |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client credentials |
@@ -712,7 +715,7 @@ it immediately - removing it from the tree does not undo the exposure.
 ```
 It is intentionally excluded from the app's global `/api` prefix (see
 `src/backend/main.ts`) so it is reachable at the bare path `/health`, which
-is what Docker/Render health checks expect.
+is what container/platform health checks typically expect.
 
 ### Google OAuth callback
 
@@ -723,10 +726,10 @@ The callback route is fixed by the application at:
 In the Google Cloud Console OAuth client, register the production callback
 as an **Authorized redirect URI**:
 ```text
-https://<your-render-service>.onrender.com/auth/google/callback
+https://<your-production-domain>/auth/google/callback
 ```
-and set `GOOGLE_CALLBACK_URL` to that same URL in Render's environment
-variables.
+and set `GOOGLE_CALLBACK_URL` to that same URL in the deployment target's
+environment variables.
 
 ### Docker
 
@@ -750,12 +753,12 @@ Postgres plus a one-shot `db-migrate` + seed step ahead of the app
 container, as before.
 
 **Migration safety note:** running `migrate deploy` from the container's own
-entrypoint is fine for a single-instance deployment (Render's free/starter
-plan runs one instance) - Prisma also takes an internal database lock while
-applying migrations, so a second concurrent instance would wait rather than
-race. If you scale to multiple replicas, prefer running the migration as a
-separate one-off step (a dedicated release/job step, or Render's Pre-Deploy
-Command on paid plans) instead of relying on every replica's entrypoint.
+entrypoint is fine for a single-instance deployment - Prisma also takes an
+internal database lock while applying migrations, so a second concurrent
+instance would wait rather than race. If you scale to multiple replicas,
+prefer running the migration as a separate one-off step (a dedicated
+release/job step, or whatever pre-deploy hook your hosting platform offers)
+instead of relying on every replica's entrypoint.
 
 ### CI (`.github/workflows/ci.yml`)
 
@@ -768,36 +771,39 @@ tests against a real `postgres:14` service container (with
 ### CD (`.github/workflows/cd.yml`)
 
 Runs after CI succeeds on `main` (via `workflow_run`, so the expensive
-lint/test/build steps are never duplicated): builds and pushes the Docker
-image to `ghcr.io/<owner>/ottocademy` tagged both `sha-<short-sha>` and
-`main`, triggers a Render deploy hook, then polls `GET /health` on the
-deployed URL until it responds `200` (or fails the workflow after retries).
-
-Required GitHub repository configuration for CD to run end-to-end:
-- **Secret** `RENDER_DEPLOY_HOOK` - Render's deploy hook URL for the Web
-  Service (Render dashboard → service → Settings → Deploy Hook).
-- **Variable** `RENDER_HEALTH_URL` - the deployed health URL, e.g.
-  `https://ottocademy.onrender.com/health`.
+lint/test/build steps are never duplicated): builds the Docker image and
+pushes it to `ghcr.io/<owner>/ottocademy`, tagged with both an immutable
+`sha-<short-sha>` and a floating `main` tag. **That GHCR push is the last
+step of this pipeline** - no deploy step runs afterward, and no
+deployment-target secrets or variables are required for CD to run
+end-to-end.
 
 `GITHUB_TOKEN` (built-in, no setup needed) is used to push to GHCR with
-`contents: read` / `packages: write` permissions only.
+`contents: read` / `packages: write` permissions only - no other secrets
+are needed.
 
-### Render
+### Deploying the image
 
-Create a Render **Web Service** backed by a **prebuilt image**, not a
-repository build:
-1. New Web Service → "Deploy an existing image from a registry".
-2. Image: `ghcr.io/<owner>/ottocademy:main` (or a specific `sha-<commit>`
-   tag for a pinned rollback).
-3. If the GHCR package is private, add Render's deploy key as a registry
+Deploying the GHCR image to a hosting platform (Render or otherwise) is
+currently a separate, manual step outside this CI/CD pipeline - no
+platform-specific secrets are stored in GitHub for it. Whichever platform
+is used later, the pattern is the same:
+1. Point it at `ghcr.io/<owner>/ottocademy:main` (or a specific
+   `sha-<commit>` tag for a pinned rollback) as a prebuilt image, not a
+   repository build.
+2. If the GHCR package is private, give the platform a registry
    credential, or make the package public (Settings → package visibility).
-4. Set the environment variables listed above.
-5. Health check path: `/health`.
-6. Copy the service's **Deploy Hook** URL into the `RENDER_DEPLOY_HOOK`
-   GitHub secret, and its public URL + `/health` into the
-   `RENDER_HEALTH_URL` GitHub variable.
-7. Attach a Render PostgreSQL instance (or any external Postgres) and set
-   `DATABASE_URL` to its connection string.
+3. Set the environment variables listed above, including `DATABASE_URL`
+   pointing at that platform's PostgreSQL (managed or external).
+4. Configure its health check to `GET /health`.
+5. Set `GOOGLE_CALLBACK_URL` to that platform's public callback URL (see
+   "Google OAuth callback" above).
+
+If GitHub Actions is later extended to deploy automatically again, that
+deploy step (and whatever secrets/variables it needs) should be added back
+into `cd.yml` as its own job after `build-and-push`, so a failed or
+misconfigured deploy step still can't block the GHCR publish that CD's
+job already completed.
 
 ## 🐛 Troubleshooting
 
