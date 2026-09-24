@@ -1,6 +1,6 @@
 name: CD
 
-# Runs after CI has completed successfully on main, rather than
+# Runs after CI has completed successfully on master, rather than
 # duplicating CI's lint/test/build work here (workflow_run gives us the
 # exact commit CI validated, via head_sha).
 #
@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cd-main
+  group: cd-master
   cancel-in-progress: false
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           {
             echo "all<<EOF"
             echo "${image}:sha-${short_sha}"
-            echo "${image}:main"
+            echo "${image}:master"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
