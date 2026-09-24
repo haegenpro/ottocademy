@@ -20,4 +20,4 @@ jobs:
         run: |
           git clone --mirror "https://github.com/${{ github.repository }}.git" repo
           cd repo
-          git push --mirror "https://oauth2:${GITLAB_TOKEN}@gitlab.com/haegenquinston/ottocademy.git"
+          git push --mirror "https://oauth2:${GITLAB_TOKEN}@gitlab.itb.ac.id/13523109/ottocademy.git"
