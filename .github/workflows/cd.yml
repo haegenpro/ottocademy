@@ -3,6 +3,11 @@ name: CD
 # Runs after CI has completed successfully on main, rather than
 # duplicating CI's lint/test/build work here (workflow_run gives us the
 # exact commit CI validated, via head_sha).
+#
+# Scope: GitHub Actions builds the production image and publishes it to
+# GHCR. That is the final step of this pipeline - no hosting-platform
+# deploy step runs here. GitLab is a downstream, read-only mirror for
+# evaluator access only; it does not run CI/CD.
 on:
   workflow_run:
     workflows: ['CI']
@@ -24,8 +29,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    outputs:
-      primary-tag: ${{ steps.tags.outputs.primary }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,7 +49,6 @@ jobs:
           sha="${{ github.event.workflow_run.head_sha }}"
           short_sha="${sha:0:7}"
           {
-            echo "primary=${image}:sha-${short_sha}"
             echo "all<<EOF"
             echo "${image}:sha-${short_sha}"
             echo "${image}:main"
@@ -60,46 +62,3 @@ jobs:
           tags: ${{ steps.tags.outputs.all }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy-render:
-    name: Deploy to Render
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Trigger Render deploy hook
-        run: |
-          set -euo pipefail
-          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
-            echo "::error::RENDER_DEPLOY_HOOK secret is not configured. Add it under Settings > Secrets and variables > Actions (see README's Render section)."
-            exit 1
-          fi
-          curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-          echo "Render deploy triggered for image ${{ needs.build-and-push.outputs.primary-tag }}"
-
-  smoke-test:
-    name: Post-deploy health check
-    needs: [deploy-render]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for the deployment to become healthy
-        env:
-          HEALTH_URL: ${{ vars.RENDER_HEALTH_URL }}
-        run: |
-          set -euo pipefail
-          if [ -z "${HEALTH_URL:-}" ]; then
-            echo "::error::RENDER_HEALTH_URL repository variable is not configured (Settings > Secrets and variables > Actions > Variables). Expected e.g. https://<service>.onrender.com/health"
-            exit 1
-          fi
-
-          for attempt in $(seq 1 15); do
-            if curl -fsS "$HEALTH_URL"; then
-              echo "Health check passed on attempt $attempt."
-              exit 0
-            fi
-            echo "Attempt $attempt/15 failed, retrying in 20s..."
-            sleep 20
-          done
-
-          echo "::error::Health check at $HEALTH_URL did not succeed after retries."
-          exit 1
