@@ -14,9 +14,9 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!" for health endpoint', () => {
-      expect(appController.getHealth()).toBe('Hello World!');
+  describe('health', () => {
+    it('should return status ok', () => {
+      expect(appController.getHealth()).toEqual({ status: 'ok' });
     });
   });
 });

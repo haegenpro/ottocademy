@@ -19,6 +19,7 @@ A comprehensive course platform built with NestJS backend and vanilla frontend i
 - [Architecture & SOLID Principles](#-architecture--solid-principles)
 - [API Documentation](#-api-documentation)
 - [Development](#-development)
+- [CI/CD & Production Deployment](#-cicd--production-deployment)
 - [Troubleshooting](#-troubleshooting)
 
 ## 🎯 Project Overview
@@ -320,25 +321,14 @@ docker-compose up --build
 ### 💻 Option B: Local Development
 
 #### 1. Environment Setup
-Create `.env` file:
-```env
-# Database Configuration
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=grocademy
-DATABASE_URL="postgresql://postgres:your_password@localhost:5432/grocademy?schema=public"
-
-# JWT Secret
-JWT_SECRET=your_super_secret_jwt_key
-
-# Google OAuth Configuration (see Google OAuth Configuration section)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALLBACK_URL=http://127.0.0.1:3000/auth/google/callback
-
-# Application Port
-PORT=3000
+Copy the example file and fill in real values (never commit the result):
+```bash
+cp .env.example .env
 ```
+`.env.example` documents every environment variable the app actually reads
+(database, JWT, Google OAuth, Google Cloud Storage, port). See
+[CI/CD & Production Deployment](#-cicd--production-deployment) for what each
+one does in production.
 
 #### 2. Installation & Setup
 ```bash
@@ -659,6 +649,155 @@ After running the setup script, you can use these credentials:
 - **Email**: john.doe@example.com
 - **Password**: password123
 - **Access**: Regular user access, can purchase and view courses
+
+## 🚀 CI/CD & Production Deployment
+
+### Architecture
+
+```text
+GitHub (source of truth)
+  → GitHub Actions CI   (lint, unit tests, integration tests against a real
+                          Postgres service container, production build,
+                          Docker build)
+  → GitHub Actions CD   (on push to main, after CI succeeds)
+      → Docker image built and pushed to GHCR
+        (ghcr.io/<owner>/ottocademy:sha-<commit>, and :main)
+      → Render Web Service pulls that image and redeploys
+      → Post-deploy smoke test: GET /health
+  → Render Web Service (container) → managed PostgreSQL
+```
+
+GitLab is used only as a read-only mirror for evaluator access - it does not
+run any CI/CD; GitHub Actions is the only CI/CD engine.
+
+### Environments: development vs CI vs production
+
+| | Database | Migrations | Config source |
+|---|---|---|---|
+| **Development** | `docker-compose.yml` `db` service, or a local Postgres | `npx prisma migrate dev` (creates new migrations) | `.env` (never committed) |
+| **CI** | Ephemeral `postgres:14` GitHub Actions service container | `npx prisma migrate deploy` (applies committed migrations) | Job-scoped env vars with throwaway test values |
+| **Production** | Render-managed PostgreSQL (or any external Postgres) | `npx prisma migrate deploy`, run by the container's entrypoint before the app starts | Render service environment variables |
+
+Production and CI never run `prisma migrate dev` - only `migrate deploy`,
+which applies migrations already committed under `prisma/migrations/`
+and never generates new ones.
+
+### Environment variables
+
+All variables the application actually reads are documented in
+[`.env.example`](.env.example) with safe placeholders - copy it to `.env`
+for local use and never commit the real `.env`. In production (Render),
+set the real values as service environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `NODE_ENV` | `production` on Render |
+| `PORT` | Set automatically by Render; app falls back to `3000` locally |
+| `DATABASE_URL` | Postgres connection string (Render-managed DB or external) |
+| `JWT_SECRET` | Signing secret for session JWTs - use a long random value |
+| `FRONTEND_URL` | Base URL the app redirects the browser to after Google OAuth login |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client credentials |
+| `GOOGLE_CALLBACK_URL` | Must exactly match the callback path below, using the production domain |
+| `GOOGLE_CLOUD_PROJECT_ID` / `GOOGLE_CLOUD_KEYFILE` / `GOOGLE_CLOUD_STORAGE_BUCKET` | Google Cloud Storage bucket used for course thumbnails/PDF/video uploads |
+
+Never commit real secrets. If a secret is ever committed to the repository
+(this project's history shows one such incident, already removed), rotate
+it immediately - removing it from the tree does not undo the exposure.
+
+### Health endpoint
+
+`GET /health` is public (no auth), cheap, and returns:
+```json
+{ "status": "ok" }
+```
+It is intentionally excluded from the app's global `/api` prefix (see
+`src/backend/main.ts`) so it is reachable at the bare path `/health`, which
+is what Docker/Render health checks expect.
+
+### Google OAuth callback
+
+The callback route is fixed by the application at:
+```text
+/auth/google/callback
+```
+In the Google Cloud Console OAuth client, register the production callback
+as an **Authorized redirect URI**:
+```text
+https://<your-render-service>.onrender.com/auth/google/callback
+```
+and set `GOOGLE_CALLBACK_URL` to that same URL in Render's environment
+variables.
+
+### Docker
+
+Build and run the production image standalone (no Compose) against any
+external Postgres:
+```bash
+docker build -t ottocademy:test .
+docker run --rm -p 3000:3000 \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/db?schema=public" \
+  -e JWT_SECRET="a-long-random-secret" \
+  -e GOOGLE_CLIENT_ID=placeholder-client-id \
+  ottocademy:test
+```
+On container start, the entrypoint (`scripts/docker-entrypoint.sh`) runs
+`npx prisma migrate deploy` and then starts the compiled app - the image
+is self-contained and does not depend on Docker Compose being present.
+The container runs as a non-root user.
+
+For local multi-service development, `docker-compose.yml` still provisions
+Postgres plus a one-shot `db-migrate` + seed step ahead of the app
+container, as before.
+
+**Migration safety note:** running `migrate deploy` from the container's own
+entrypoint is fine for a single-instance deployment (Render's free/starter
+plan runs one instance) - Prisma also takes an internal database lock while
+applying migrations, so a second concurrent instance would wait rather than
+race. If you scale to multiple replicas, prefer running the migration as a
+separate one-off step (a dedicated release/job step, or Render's Pre-Deploy
+Command on paid plans) instead of relying on every replica's entrypoint.
+
+### CI (`.github/workflows/ci.yml`)
+
+Runs on every pull request and on pushes to `main`:
+lint (ESLint + Prettier check) → Prisma generate → unit tests → integration
+tests against a real `postgres:14` service container (with
+`prisma migrate deploy`) → production build → dependency audit
+(informational) → Docker build.
+
+### CD (`.github/workflows/cd.yml`)
+
+Runs after CI succeeds on `main` (via `workflow_run`, so the expensive
+lint/test/build steps are never duplicated): builds and pushes the Docker
+image to `ghcr.io/<owner>/ottocademy` tagged both `sha-<short-sha>` and
+`main`, triggers a Render deploy hook, then polls `GET /health` on the
+deployed URL until it responds `200` (or fails the workflow after retries).
+
+Required GitHub repository configuration for CD to run end-to-end:
+- **Secret** `RENDER_DEPLOY_HOOK` - Render's deploy hook URL for the Web
+  Service (Render dashboard → service → Settings → Deploy Hook).
+- **Variable** `RENDER_HEALTH_URL` - the deployed health URL, e.g.
+  `https://ottocademy.onrender.com/health`.
+
+`GITHUB_TOKEN` (built-in, no setup needed) is used to push to GHCR with
+`contents: read` / `packages: write` permissions only.
+
+### Render
+
+Create a Render **Web Service** backed by a **prebuilt image**, not a
+repository build:
+1. New Web Service → "Deploy an existing image from a registry".
+2. Image: `ghcr.io/<owner>/ottocademy:main` (or a specific `sha-<commit>`
+   tag for a pinned rollback).
+3. If the GHCR package is private, add Render's deploy key as a registry
+   credential, or make the package public (Settings → package visibility).
+4. Set the environment variables listed above.
+5. Health check path: `/health`.
+6. Copy the service's **Deploy Hook** URL into the `RENDER_DEPLOY_HOOK`
+   GitHub secret, and its public URL + `/health` into the
+   `RENDER_HEALTH_URL` GitHub variable.
+7. Attach a Render PostgreSQL instance (or any external Postgres) and set
+   `DATABASE_URL` to its connection string.
 
 ## 🐛 Troubleshooting
 

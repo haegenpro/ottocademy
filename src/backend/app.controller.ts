@@ -7,9 +7,12 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  // Lightweight liveness check, publicly accessible, no auth required.
+  // Excluded from the global 'api' prefix in main.ts so it is reachable
+  // at /health for container/Render health checks.
   @Get('health')
-  getHealth(): string {
-    return this.appService.getHello();
+  getHealth(): { status: string } {
+    return this.appService.getHealth();
   }
 
   // Serve root index.html

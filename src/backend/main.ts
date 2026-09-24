@@ -25,6 +25,7 @@ async function bootstrap() {
     app.setGlobalPrefix('api', {
       exclude: [
         '',
+        'health',
         'auth.html',
         'courses.html',
         'course-detail.html',
@@ -56,8 +57,10 @@ async function bootstrap() {
 
     const port = process.env.PORT ?? 3000;
 
-    // Listen on all interfaces (IPv4 and IPv6)
-    await app.listen(port, '::'); // '::' binds to both IPv4 and IPv6
+    // Bind to 0.0.0.0 so the app is reachable inside containers/PaaS
+    // platforms (Docker, Render) that route traffic to the container's
+    // external interface rather than localhost/IPv6.
+    await app.listen(port, '0.0.0.0');
 
     logger.log(`Application is running on: http://localhost:${port}`);
     logger.log(`Also available on: http://127.0.0.1:${port}`);
