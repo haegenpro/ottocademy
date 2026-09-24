@@ -1,7 +1,30 @@
-# dependencies and build artifacts
+# dependencies and build artifacts (regenerated inside the image)
 node_modules
 dist
+coverage
+reports
+tsconfig.build.tsbuildinfo
 
-#logs
+# version control
+.git
+.gitignore
+.gitlab-ci.yml
+
+# logs
+npm-debug.log*
+
+# environment files - never bake secrets into the image
 .env
-npm-debug.log
+.env.*
+!.env.example
+
+# docs / local-only tooling (not needed inside the image)
+README.md
+docker-compose*.yml
+docker-seed.*
+Dockerfile*
+.dockerignore
+
+# NOTE: prisma/ and scripts/ are intentionally NOT excluded - the build
+# stage needs prisma/ for `prisma generate` + `prisma migrate deploy`,
+# and scripts/ for the seed script and container entrypoint.
